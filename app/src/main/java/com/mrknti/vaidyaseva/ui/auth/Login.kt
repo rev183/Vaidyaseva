@@ -33,7 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrknti.vaidyaseva.ui.components.LoadingView
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginPage(onLogin: () -> Unit) {
 

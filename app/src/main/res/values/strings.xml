@@ -2,4 +2,6 @@
     <string name="app_name">Vaidyaseva</string>
 
     <string name="home">Home</string>
+
+    <string name="default_notification_channel_id">common</string>
 </resources>

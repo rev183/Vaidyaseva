@@ -16,15 +16,24 @@
 //
 package com.mrknti.vaidyaseva
 
+import android.annotation.SuppressLint
+import android.app.NotificationManager
 import android.content.Context
+import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.mrknti.vaidyaseva.data.ApiService
-import com.mrknti.vaidyaseva.data.AuthRepository
-import com.mrknti.vaidyaseva.data.AuthRepositoryImpl
+import com.mrknti.vaidyaseva.data.authentication.AuthRepository
+import com.mrknti.vaidyaseva.data.authentication.AuthRepositoryImpl
 import com.mrknti.vaidyaseva.data.DataStoreManager
+import com.mrknti.vaidyaseva.data.chat.ChatRepository
+import com.mrknti.vaidyaseva.data.chat.ChatRepositoryImpl
 import com.mrknti.vaidyaseva.data.dataModel.EnvelopeConverterFactory
 import com.mrknti.vaidyaseva.data.network.CoroutineCallAdapterFactory
 import com.mrknti.vaidyaseva.data.room.VaidyasevaDatabase
+import com.mrknti.vaidyaseva.data.userService.ServiceRepositoryImpl
+import com.mrknti.vaidyaseva.data.userService.ServicesRepository
+import com.mrknti.vaidyaseva.notifications.NotificationsManager
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +48,7 @@ import okhttp3.logging.LoggingEventListener
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.io.File
+import java.util.Date
 
 
 /**
@@ -47,7 +57,7 @@ import java.io.File
  * For a real app, you would use something like Hilt/Dagger instead.
  */
 object Graph {
-    lateinit var okHttpClient: OkHttpClient
+    private lateinit var okHttpClient: OkHttpClient
 
     lateinit var database: VaidyasevaDatabase
         private set
@@ -58,11 +68,22 @@ object Graph {
     lateinit var authRepository: AuthRepository
         private set
 
-    lateinit var retrofit: Retrofit
+    lateinit var servicesRepository: ServicesRepository
         private set
 
-    lateinit var apiService: ApiService
+    lateinit var chatRepository: ChatRepository
         private set
+
+    lateinit var moshi: Moshi
+        private set
+
+    @SuppressLint("StaticFieldLeak")
+    lateinit var notificationsManager: NotificationsManager
+        private set
+
+    private lateinit var retrofit: Retrofit
+
+    private lateinit var apiService: ApiService
 
     private val mainDispatcher: CoroutineDispatcher
         get() = Dispatchers.Main
@@ -81,14 +102,22 @@ object Graph {
         okHttpClient = OkHttpClient.Builder()
             .cache(createCache(context))
             .apply {
-                if (BuildConfig.DEBUG) eventListenerFactory(LoggingEventListener.Factory())
+                if (BuildConfig.DEBUG) {
+                    eventListenerFactory(LoggingEventListener.Factory())
+                }
                 addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
                 addInterceptor(VsInterceptor())
+                addInterceptor(
+                    ChuckerInterceptor.Builder(context)
+                        .alwaysReadResponseBody(true)
+                        .build()
+                )
             }
             .build()
 
-        val moshi = Moshi.Builder()
+        moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
+            .add(Date::class.java, Rfc3339DateJsonAdapter().nullSafe())
             .build()
 
         retrofit = Retrofit.Builder()
@@ -102,6 +131,9 @@ object Graph {
         apiService = retrofit.create(ApiService::class.java)
 
         authRepository = AuthRepositoryImpl(apiService)
+        servicesRepository = ServiceRepositoryImpl(apiService)
+        chatRepository = ChatRepositoryImpl(apiService)
+        notificationsManager = NotificationsManager(context)
 
 //        database = Room.databaseBuilder(context, VaidyasevaDatabase::class.java, "data.db")
 //            // This is not recommended for normal apps, but the goal of this sample isn't to
@@ -119,7 +151,7 @@ class VsInterceptor: Interceptor {
             .addHeader("Accept", "*/*")
             .addHeader("Content-Type", "application/json;charset=utf-8")
         if (authToken != null) {
-            requestBuilder.addHeader("Authorization", "$authToken")
+            requestBuilder.addHeader("token", "$authToken")
         }
         request = requestBuilder.build()
         return chain.proceed(request = request)

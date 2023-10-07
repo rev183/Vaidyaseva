@@ -2,14 +2,20 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'com.google.devtools.ksp'
+    id 'kotlin-parcelize'
+    id 'com.google.gms.google-services'
 }
+
+def debugPkgSuffix = ".debug"
+def fileProviderSuffix = ".fileprovider"
+def appId = "com.mrknti.vaidyaseva"
 
 android {
     namespace 'com.mrknti.vaidyaseva'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.mrknti.vaidyaseva"
+        applicationId appId
         minSdk 24
         targetSdk 34
         versionCode 1
@@ -27,9 +33,20 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
             minifyEnabled false
+            applicationIdSuffix debugPkgSuffix
+            manifestPlaceholders = [
+                    file_provider_authorities: "${appId}${debugPkgSuffix}${fileProviderSuffix}"
+            ]
+        }
+        release {
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            manifestPlaceholders = [
+                    file_provider_authorities: "${appId}${fileProviderSuffix}"
+            ]
+            signingConfig signingConfigs.debug
         }
     }
     compileOptions {
@@ -48,19 +65,23 @@ android {
 
 dependencies {
 
-    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
     implementation platform('org.jetbrains.kotlin:kotlin-bom:1.9.0')
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.2'
     implementation 'androidx.activity:activity-compose:1.7.2'
     implementation platform('androidx.compose:compose-bom:2022.10.00')
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.compose.ui:ui-tooling-preview'
-    implementation 'androidx.compose.material3:material3'
-    implementation 'androidx.navigation:navigation-runtime-ktx:2.7.1'
-    implementation 'androidx.navigation:navigation-compose:2.7.1'
+    implementation 'androidx.compose.material3:material3:1.1.2'
+    implementation "androidx.compose.material3:material3-window-size-class:1.1.2"
+    implementation 'androidx.navigation:navigation-runtime-ktx:2.7.3'
+    implementation 'androidx.navigation:navigation-compose:2.7.3'
+
+    implementation platform('com.google.firebase:firebase-bom:32.3.1')
+    implementation 'com.google.firebase:firebase-messaging-ktx'
 
     implementation 'androidx.room:room-common:2.5.2'
     implementation 'androidx.room:room-ktx:2.5.2'
@@ -70,11 +91,16 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor:4.11.0'
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
-    implementation 'com.squareup.moshi:moshi-kotlin:1.14.0'
+    implementation 'com.squareup.moshi:moshi-kotlin:1.15.0'
+    implementation 'com.squareup.moshi:moshi-adapters:1.15.0'
+
+    // chucker
+    debugImplementation "com.github.chuckerteam.chucker:library:4.0.0"
+    releaseImplementation "com.github.chuckerteam.chucker:library-no-op:4.0.0"
 
 
     ksp 'androidx.room:room-compiler:2.5.2'
-    ksp 'com.squareup.moshi:moshi-kotlin-codegen:1.14.0'
+    ksp 'com.squareup.moshi:moshi-kotlin-codegen:1.15.0'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

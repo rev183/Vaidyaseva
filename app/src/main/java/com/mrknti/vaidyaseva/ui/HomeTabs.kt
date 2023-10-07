@@ -33,13 +33,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptions
+import androidx.navigation.NavOptionsBuilder
+import androidx.navigation.Navigator
+import androidx.navigation.NavigatorProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.mrknti.vaidyaseva.Graph
 import com.mrknti.vaidyaseva.R
+import com.mrknti.vaidyaseva.data.chat.ChatThread
+import com.mrknti.vaidyaseva.data.userService.Service
 import com.mrknti.vaidyaseva.ui.components.LoadingView
+import com.mrknti.vaidyaseva.ui.services.Services
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -97,7 +104,13 @@ val bottomNavItems = listOf(
 )
 
 @Composable
-fun HomeNavHost(navController: NavHostController, paddingValues: PaddingValues) {
+fun HomeNavHost(
+    navController: NavHostController,
+    paddingValues: PaddingValues,
+    navigateToBooking: (ServiceRequest) -> Unit,
+    navigateToChatDetail: (ChatThread) -> Unit,
+    navigateToServiceDetail: (Service) -> Unit,
+) {
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route,
@@ -106,26 +119,28 @@ fun HomeNavHost(navController: NavHostController, paddingValues: PaddingValues) 
         val modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues = paddingValues)
-        composable(Screen.Home.route) { Home(modifier) }
-        composable(Screen.Services.route) { Services(modifier) }
-        composable(Screen.Inbox.route) { Inbox(modifier) }
+        composable(Screen.Home.route) { Home(modifier, navigateToBooking = navigateToBooking) }
+        composable(Screen.Services.route) { Services(modifier, onServiceClick = navigateToServiceDetail) }
+        composable(Screen.Inbox.route) { Inbox(modifier, onChatClick = navigateToChatDetail) }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeBottomTabs(navController: NavHostController) {
-    val viewModel : HomeAppBarViewModel = viewModel()
+    val viewModel: HomeAppBarViewModel = viewModel()
     val isLoggedIn = viewModel.auth.collectAsStateWithLifecycle()
     when (isLoggedIn.value) {
         HomeViewState.Loading -> {
             LoadingView()
         }
+
         HomeViewState.NotLoggedIn -> {
             LaunchedEffect(isLoggedIn) {
                 navController.navigate(NavGraph.AUTH_ROUTE)
             }
         }
+
         else -> {
             val tabNavController = rememberNavController()
             Scaffold(
@@ -144,14 +159,36 @@ fun HomeBottomTabs(navController: NavHostController) {
                                 onClick = {
                                     tabNavController.navigate(it.route)
                                 },
-                                icon = { Icon(imageVector = it.icon, contentDescription = it.name) },
-                                label = { Text(text = it.name, style = MaterialTheme.typography.bodySmall) },
+                                icon = {
+                                    Icon(
+                                        imageVector = it.icon,
+                                        contentDescription = it.name
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = it.name,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                },
                             )
                         }
                     }
                 }
             ) { paddingValues ->
-                HomeNavHost(navController = tabNavController, paddingValues = paddingValues)
+                HomeNavHost(
+                    navController = tabNavController,
+                    paddingValues = paddingValues,
+                    navigateToBooking = { navController.navigate("${Screen.BookServices.route}/${it.type}}") },
+                    navigateToChatDetail = { navController.navigate("${Screen.ChatDetail.route}/${it.id}}") },
+                    navigateToServiceDetail =
+                    {
+                        val moshi = Graph.moshi
+                        val jsonAdapter = moshi.adapter(Service::class.java)
+                        val serviceJson = jsonAdapter.toJson(it)
+                        navController.navigate("${Screen.ServiceDetail.route}/${serviceJson}}")
+                    },
+                )
             }
         }
     }

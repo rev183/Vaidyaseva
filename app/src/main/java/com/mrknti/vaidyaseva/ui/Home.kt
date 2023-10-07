@@ -37,19 +37,14 @@ import androidx.compose.ui.zIndex
 import com.mrknti.vaidyaseva.data.ServiceType
 
 @Composable
-fun Home(modifier: Modifier = Modifier) {
-    HomeContent(modifier = modifier)
-}
-
-@Composable
-fun HomeContent(modifier: Modifier) {
+fun Home(modifier: Modifier = Modifier, navigateToBooking: (ServiceRequest) -> Unit) {
     Surface(modifier = modifier.fillMaxSize()) {
-        ServicesToBook()
+        ServicesToBook(navigateToBooking = navigateToBooking)
     }
 }
 
 @Composable
-fun ServicesToBook() {
+fun ServicesToBook(navigateToBooking: (ServiceRequest) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -63,21 +58,25 @@ fun ServicesToBook() {
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(HOME_SERVICES) { service ->
-                ServiceItem(service = service)
+            items(HOME_SERVICE.values.toList()) { service ->
+                ServiceRequestItem(serviceRequest = service, navigateToBooking = navigateToBooking)
             }
         }
     }
 }
 
 @Composable
-fun ServiceItem(service: Service, modifier: Modifier = Modifier, onServiceClick: (Service) -> Unit = { }) {
+fun ServiceRequestItem(
+    serviceRequest: ServiceRequest,
+    modifier: Modifier = Modifier,
+    navigateToBooking: (ServiceRequest) -> Unit
+) {
     Box(
         modifier = modifier
             .shadow(4.dp, shape = MaterialTheme.shapes.medium)
             .zIndex(4.dp.value)
             .background(color = MaterialTheme.colorScheme.surfaceTint)
-            .clickable { onServiceClick(service) },
+            .clickable { navigateToBooking(serviceRequest) },
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -86,12 +85,12 @@ fun ServiceItem(service: Service, modifier: Modifier = Modifier, onServiceClick:
             modifier = Modifier.padding(8.dp)
         ) {
             Image(
-                imageVector = service.icon,
+                imageVector = serviceRequest.icon,
                 contentDescription = null,
                 modifier = Modifier.size(40.dp)
             )
             Text(
-                text = service.title,
+                text = serviceRequest.title,
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp)
@@ -100,17 +99,25 @@ fun ServiceItem(service: Service, modifier: Modifier = Modifier, onServiceClick:
     }
 }
 
-data class Service(
+data class ServiceRequest(
     val icon: ImageVector,
     val title: String,
     val type: String
 )
 
-val HOME_SERVICES = listOf(
-    Service(Icons.Outlined.LocationOn, "Cab", ServiceType.CAB),
-    Service(Icons.Outlined.Person, "Cleaning", ServiceType.CLEANING),
-    Service(Icons.Outlined.Build, "Plumbing", ServiceType.PLUMBING),
-    Service(Icons.Outlined.ShoppingCart, "Medicine", ServiceType.MEDICINE),
-    Service(Icons.Outlined.Phone, "Room Service", ServiceType.ROOM_SERVICE),
-    Service(Icons.Outlined.Add, "General", ServiceType.NORMAL),
+val HOME_SERVICE = mapOf(
+    ServiceType.CAB to ServiceRequest(Icons.Outlined.LocationOn, "Cab", ServiceType.CAB),
+    ServiceType.CLEANING to ServiceRequest(Icons.Outlined.Person, "Cleaning", ServiceType.CLEANING),
+    ServiceType.PLUMBING to ServiceRequest(Icons.Outlined.Build, "Plumbing", ServiceType.PLUMBING),
+    ServiceType.MEDICINE to ServiceRequest(
+        Icons.Outlined.ShoppingCart,
+        "Medicine",
+        ServiceType.MEDICINE
+    ),
+    ServiceType.ROOM_SERVICE to ServiceRequest(
+        Icons.Outlined.Phone,
+        "Room Service",
+        ServiceType.ROOM_SERVICE
+    ),
+    ServiceType.NORMAL to ServiceRequest(Icons.Outlined.Add, "General", ServiceType.NORMAL),
 )

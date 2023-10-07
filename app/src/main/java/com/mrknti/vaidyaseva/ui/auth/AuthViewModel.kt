@@ -6,9 +6,12 @@ import com.mrknti.vaidyaseva.Graph
 import com.mrknti.vaidyaseva.data.network.handleError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class AuthViewModel() : ViewModel() {
 
@@ -34,8 +37,19 @@ class AuthViewModel() : ViewModel() {
             authFlow
                 .map {
                     dataManager.saveAuthToken(it.authToken)
+                    dataManager.saveUser(it.userId, it.roles)
                     _state.value = _state.value.copy(isLoading = false)
-                    _actions.value = AuthActions.Login
+                    if (dataManager.isFCMRegistrationPending) {
+                        authRepository.registerFCMToken(dataManager.fcmToken.first())
+                            .handleError { e ->
+                                _state.value = _state.value.copy(error = e.message ?: "")
+                            }.collect {
+                                dataManager.isFCMRegistrationPending = false
+                                _actions.value = AuthActions.Login
+                            }
+                    } else {
+                        _actions.value = AuthActions.Login
+                    }
                 }
                 .stateIn(viewModelScope)
         }
@@ -64,7 +78,7 @@ data class AuthUIState(
 )
 
 sealed class AuthActions {
-    object Login : AuthActions()
+    data object Login : AuthActions()
 }
 
 enum class AuthMode {
