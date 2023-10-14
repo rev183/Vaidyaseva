@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -86,14 +87,16 @@ fun ServiceRequestItem(
         ) {
             Image(
                 imageVector = serviceRequest.icon,
+                modifier = Modifier.size(40.dp),
                 contentDescription = null,
-                modifier = Modifier.size(40.dp)
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
             )
             Text(
                 text = serviceRequest.title,
+                modifier = Modifier.padding(top = 8.dp),
+                color = MaterialTheme.colorScheme.onPrimary,
                 style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp)
+                textAlign = TextAlign.Center
             )
         }
     }

@@ -2,6 +2,7 @@ package com.mrknti.vaidyaseva.data.eventBus
 
 import android.util.Log
 import com.mrknti.vaidyaseva.data.chat.ChatMessage
+import com.mrknti.vaidyaseva.data.userService.Service
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -29,3 +30,5 @@ object EventBus {
 }
 
 data class NewChatEvent(val chatMessage: ChatMessage)
+
+data class ServiceCompletedEvent(val service: Service)

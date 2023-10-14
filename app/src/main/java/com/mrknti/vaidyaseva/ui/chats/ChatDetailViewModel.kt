@@ -24,9 +24,12 @@ class ChatDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
     private var page by mutableIntStateOf(1)
     var canPaginate by mutableStateOf(true)
     private var listState by mutableStateOf(ListState.IDLE)
+    private val messages = mutableListOf<ChatMessage>()
+    // state and actions
     private val _state = MutableStateFlow(ChatDetailUIState())
     val state = _state.asStateFlow()
-    private val messages = mutableListOf<ChatMessage>()
+    private val _actions = MutableStateFlow<ChatDetailActions?>(null)
+    val actions = _actions.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -67,29 +70,23 @@ class ChatDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun sendMessage() {
-        if (_state.value.newChatBody.isNotEmpty()) {
-            viewModelScope.launch {
-                chatRepository.addChatMessage(threadId!!, _state.value.newChatBody)
-                    .handleError {
-                        _state.value =
-                            _state.value.copy(listState = ListState.ERROR, error = it.message ?: "")
-                    }
-                    .collect {
-                        onNewChatAdded(it)
-                        onChatBodyChanged("")
-                    }
-            }
+    fun sendMessage(message: String) {
+        viewModelScope.launch {
+            chatRepository.addChatMessage(threadId!!, message)
+                .handleError {
+                    _state.value =
+                        _state.value.copy(listState = ListState.ERROR, error = it.message ?: "")
+                }
+                .collect {
+                    onNewChatAdded(it)
+                }
         }
-    }
-
-    fun onChatBodyChanged(body: String) {
-        _state.value = _state.value.copy(newChatBody = body)
     }
 
     private fun onNewChatAdded(chat: ChatMessage) {
         messages.add(0, chat)
-        _state.value = _state.value.copy(messages = messages.toMutableList())
+        _state.value = _state.value.copy(messages = messages.toList())
+        _actions.value = ChatDetailActions.ScrollToTop(chat.id)
     }
 
     fun setThreadId(threadId: Int?) {
@@ -106,7 +103,10 @@ class ChatDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
 
 data class ChatDetailUIState(
     val listState: ListState = ListState.IDLE,
-    val messages: MutableList<ChatMessage> = mutableListOf(),
+    val messages: List<ChatMessage> = emptyList(),
     val error: String = "",
-    val newChatBody: String = "",
 )
+
+sealed class ChatDetailActions {
+    data class ScrollToTop(val id: Int) : ChatDetailActions()
+}

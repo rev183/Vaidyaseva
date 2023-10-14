@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -24,30 +23,31 @@ import com.mrknti.vaidyaseva.ui.chats.ChatDetail
 fun ServiceDetail() {
     val viewModel: ServiceDetailViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
+    val service = viewState.service
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "${viewState.service.type} service requested by ${viewState.service.requester.displayName}",
+                text = "${service.type} service requested by ${service.requester.displayName}",
                 style = MaterialTheme.typography.titleSmall
             )
             Spacer(modifier = Modifier.size(16.dp))
-            if (viewState.service.status == ServiceStatus.COMPLETED) {
+            if (service.status == ServiceStatus.COMPLETED) {
                 Row {
                     Text(
-                        text = "Service Completed by ${viewState.service.assignee?.displayName}",
+                        text = "Service Completed by ${service.assignee?.displayName}",
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
-                        text = "\\u2202 ${viewState.service.completedAt}",
+                        text = "\u2022 ${service.completedAt}",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-            } else {
+            } else if (!service.isAcknowledged || service.assignee?.id == viewModel.userId) {
                 Button(
                     onClick = viewModel::onAcknowledgeCompleteClick,
                 ) {
                     Text(text =
-                    "${if (viewState.service.isAcknowledged) "Complete" else "Acknowledge"} Booking")
+                    "${if (service.isAcknowledged) "Complete" else "Acknowledge"} Booking")
                 }
             }
         }

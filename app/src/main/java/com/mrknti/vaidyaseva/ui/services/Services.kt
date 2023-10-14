@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -26,8 +25,6 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -49,18 +47,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrknti.vaidyaseva.data.ServiceType
 import com.mrknti.vaidyaseva.data.userService.Service
 import com.mrknti.vaidyaseva.ui.components.LoadingView
-import com.mrknti.vaidyaseva.ui.components.ProgressIndicator
-import java.util.logging.Logger
 
 @Composable
 fun Services(modifier: Modifier = Modifier, onServiceClick: (Service) -> Unit) {
     val viewModel: ServicesViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
-    val lazyColumnListState = rememberLazyListState()
+    val lazyListState = rememberLazyListState()
     val shouldStartPaginate = remember {
         derivedStateOf {
-            viewModel.canPaginate && (lazyColumnListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-                ?: -1) >= (lazyColumnListState.layoutInfo.totalItemsCount - 3)
+            viewModel.canPaginate && (lazyListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+                ?: -1) >= (lazyListState.layoutInfo.totalItemsCount - 3)
         }
     }
 
@@ -79,7 +75,7 @@ fun Services(modifier: Modifier = Modifier, onServiceClick: (Service) -> Unit) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        LazyColumn(state = lazyColumnListState, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(state = lazyListState, verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(items = viewState.services, key = { it.id }) {
                 ServiceRequestItem(
                     modifier = Modifier.fillMaxWidth(),
@@ -100,7 +96,12 @@ fun Services(modifier: Modifier = Modifier, onServiceClick: (Service) -> Unit) {
                     }
 
                     ListState.PAGINATION_EXHAUST -> {
-                        Text(text = "Page end")
+                        Text(
+                            text = "-------\u2B24-------",
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
                     }
 
                     else -> {}
@@ -141,8 +142,9 @@ fun ServiceRequestItem(
         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.Top) {
             Image(
                 imageVector = getIconForServiceType(service.type),
+                modifier = Modifier.size(24.dp),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp)
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
             )
             Column(
                 horizontalAlignment = Alignment.Start,
@@ -153,6 +155,7 @@ fun ServiceRequestItem(
             ) {
                 Text(
                     text = "${service.type} service requested by ${service.requester.displayName}",
+                    color = MaterialTheme.colorScheme.onPrimary,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
                 )
@@ -160,6 +163,7 @@ fun ServiceRequestItem(
                 if (service.assignee?.displayName != null && service.isAcknowledged) {
                     Text(
                         text = "assigned to ${service.assignee.displayName}",
+                        color = MaterialTheme.colorScheme.onPrimary,
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center,
                     )
@@ -167,6 +171,7 @@ fun ServiceRequestItem(
                 }
                 Text(
                     text = "Raised by: ${service.requester.displayName}",
+                    color = MaterialTheme.colorScheme.onPrimary,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
                 )
