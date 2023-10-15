@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -13,8 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -43,18 +40,6 @@ fun LoginPage(onLogin: () -> Unit) {
         onLogin()
     }
 
-    if (viewState.authMode == AuthMode.LOGIN) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            ClickableText(
-                text = AnnotatedString("Sign up here"),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(20.dp),
-                onClick = { viewModel.setAuthMode(AuthMode.SIGNUP) },
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
     if (viewState.isLoading) {
         LoadingView(alignment = Alignment.TopCenter)
     } else if (viewState.error.isNotEmpty()) {
@@ -66,8 +51,7 @@ fun LoginPage(onLogin: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        val title = if (viewState.authMode == AuthMode.LOGIN)  "Login" else "Sign up"
+        val title = "Login"
         Text(text = title, style = TextStyle(fontSize = 40.sp, fontFamily = FontFamily.Cursive))
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -87,7 +71,7 @@ fun LoginPage(onLogin: () -> Unit) {
         Spacer(modifier = Modifier.height(20.dp))
         Box(modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp)) {
             Button(
-                onClick = { viewModel.loginOrSignup() },
+                onClick = { viewModel.performLogin() },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
                     .fillMaxWidth()
