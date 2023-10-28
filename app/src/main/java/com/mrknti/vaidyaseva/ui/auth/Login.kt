@@ -15,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +37,8 @@ fun LoginPage(onLogin: () -> Unit) {
     val viewModel: AuthViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val actions = viewModel.actions.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
     if (actions.value == AuthActions.Login) {
         onLogin()
     }
@@ -43,7 +46,9 @@ fun LoginPage(onLogin: () -> Unit) {
     if (viewState.isLoading) {
         LoadingView(alignment = Alignment.TopCenter)
     } else if (viewState.error.isNotEmpty()) {
-        Toast.makeText(LocalContext.current, viewState.error, Toast.LENGTH_SHORT).show()
+        LaunchedEffect(key1 = viewState.error) {
+            Toast.makeText(context, viewState.error, Toast.LENGTH_SHORT).show()
+        }
     }
 
     Column(

@@ -13,23 +13,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DateRange
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,11 +52,14 @@ fun BookService(modifier: Modifier = Modifier) {
     val viewModel: BookServiceViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val request = viewModel.serviceBooking
+    val context = LocalContext.current
 
     if (viewState.isLoading) {
         LoadingView(alignment = Alignment.TopCenter)
     } else if (viewState.error.isNotEmpty()) {
-        Toast.makeText(LocalContext.current, viewState.error, Toast.LENGTH_SHORT).show()
+        LaunchedEffect(key1 = viewState.error) {
+            Toast.makeText(context, viewState.error, Toast.LENGTH_SHORT).show()
+        }
     }
 
     Surface(modifier = modifier

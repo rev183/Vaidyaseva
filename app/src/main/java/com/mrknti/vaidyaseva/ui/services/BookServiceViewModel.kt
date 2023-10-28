@@ -1,17 +1,16 @@
 package com.mrknti.vaidyaseva.ui.services
 
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
+import com.mrknti.vaidyaseva.data.eventBus.EventBus
+import com.mrknti.vaidyaseva.data.eventBus.ServiceRaisedEvent
 import com.mrknti.vaidyaseva.data.network.handleError
 import com.mrknti.vaidyaseva.ui.HOME_SERVICE
 import com.mrknti.vaidyaseva.ui.NavArgKeys
-import com.mrknti.vaidyaseva.ui.auth.AuthUIState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -32,9 +31,9 @@ class BookServiceViewModel(saveState: SavedStateHandle) : ViewModel() {
                     _state.value = _state.value.copy(error = e.message ?: "", isLoading = false)
                 }
                 .collect {
-                    _state.value = _state.value.copy(error = "Service booking complete", isLoading = false)
+                    _state.value = _state.value.copy(isLoading = false)
+                    EventBus.publish(ServiceRaisedEvent(it))
                 }
-            _state.value = _state.value.copy(isLoading = false)
         }
     }
 

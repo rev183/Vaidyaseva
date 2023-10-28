@@ -8,6 +8,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
+import com.mrknti.vaidyaseva.data.eventBus.EventBus
+import com.mrknti.vaidyaseva.data.eventBus.ServiceAcknowledgeEvent
+import com.mrknti.vaidyaseva.data.eventBus.ServiceCompletedEvent
+import com.mrknti.vaidyaseva.data.eventBus.ServiceRaisedEvent
 import com.mrknti.vaidyaseva.data.network.handleError
 import com.mrknti.vaidyaseva.data.userService.Service
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,12 +27,44 @@ class ServicesViewModel : ViewModel() {
     private var listState by mutableStateOf(ListState.IDLE)
     private val serviceList = mutableStateListOf<Service>()
 
+    init {
+        viewModelScope.launch {
+            EventBus.subscribe<ServiceCompletedEvent> { event ->
+                val updatedService = event.service
+                val index = serviceList.indexOfFirst { it.id == updatedService.id }
+                if (index != -1) {
+                    serviceList[index] = updatedService
+                    _state.value = _state.value.copy(services = serviceList)
+                }
+            }
+
+            EventBus.subscribe<ServiceAcknowledgeEvent> { event ->
+                val updatedService = event.service
+                val index = serviceList.indexOfFirst { it.id == updatedService.id }
+                if (index != -1) {
+                    serviceList[index] = updatedService
+                    _state.value = _state.value.copy(services = serviceList)
+                }
+            }
+
+            EventBus.subscribe<ServiceRaisedEvent> { event ->
+                val newService = event.service
+                val index = serviceList.indexOfFirst { it.id == newService.id }
+                // service not in list
+                if (index == -1) {
+                    serviceList.add(0, newService)
+                    _state.value = _state.value.copy(services = serviceList)
+                }
+            }
+        }
+    }
+
     fun getServices() {
         if (page == 1 || (page != 1 && canPaginate) && listState == ListState.IDLE) {
             listState = if (page == 1) ListState.LOADING else ListState.PAGINATING
             _state.value = _state.value.copy(listState = listState)
             viewModelScope.launch {
-                servicesRepository.getOpenServices(1)
+                servicesRepository.getOpenServices(serviceList.lastOrNull()?.id)
                     .handleError { e ->
                         _state.value =
                             _state.value.copy(listState = ListState.ERROR, error = e.message ?: "")

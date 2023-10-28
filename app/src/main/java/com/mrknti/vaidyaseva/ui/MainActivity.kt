@@ -1,9 +1,11 @@
 package com.mrknti.vaidyaseva.ui
 
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,6 +26,7 @@ import kotlinx.coroutines.runBlocking
 class MainActivity : ComponentActivity() {
 
     private val TAG = "MainActivity"
+    val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +44,12 @@ class MainActivity : ComponentActivity() {
         registerFCMToken()
     }
 
+    override fun onPostCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+        super.onPostCreate(savedInstanceState, persistentState)
+        val notificationsManager = Graph.notificationsManager
+        notificationsManager.syncChannels()
+    }
+
     private fun registerFCMToken() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
             if (!task.isSuccessful) {
@@ -52,25 +61,23 @@ class MainActivity : ComponentActivity() {
             val token = task.result
             val repository = Graph.authRepository
             val isLoggedIn = Graph.dataStoreManager.isLoggedIn
-            val isFCMRegistrationPending = Graph.dataStoreManager.isFCMRegistrationPending
+            val isFCMRegistrationCompleted = Graph.dataStoreManager.isFCMRegistrationCompleted
             val previousToken = runBlocking { Graph.dataStoreManager.fcmToken.first() }
-            if (previousToken == token && !isFCMRegistrationPending) return@OnCompleteListener
+            if (previousToken == token && isFCMRegistrationCompleted) return@OnCompleteListener
             if (isLoggedIn) {
                 CoroutineScope(Dispatchers.IO).launch {
                     repository.registerFCMToken(token)
                         .handleError { Log.e(TAG, "Failed to register FCM token", it) }
                         .collect {
                             Graph.dataStoreManager.saveFCMToken(token)
-                            Graph.dataStoreManager.isFCMRegistrationPending = false
+                            Graph.dataStoreManager.isFCMRegistrationCompleted = true
                         }
                 }
             } else {
                 CoroutineScope(Dispatchers.IO).launch {
                     Graph.dataStoreManager.saveFCMToken(token)
-                    Graph.dataStoreManager.isFCMRegistrationPending = true
                 }
             }
-
         })
     }
 }

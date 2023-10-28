@@ -49,6 +49,8 @@ import com.mrknti.vaidyaseva.data.chat.ChatMessage
 import com.mrknti.vaidyaseva.ui.services.ListState
 import com.mrknti.vaidyaseva.ui.services.Loading
 import com.mrknti.vaidyaseva.ui.services.PaginationLoading
+import com.mrknti.vaidyaseva.util.DateFormat
+import com.mrknti.vaidyaseva.util.formatDate
 import kotlinx.coroutines.launch
 
 @Composable
@@ -222,7 +224,7 @@ fun ChatMessageItem(message: ChatMessage, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = "${message.createdAt}", style = MaterialTheme.typography.bodySmall)
+                Text(text = message.createdAt.formatDate(DateFormat.HOUR_DAY_MONTH), style = MaterialTheme.typography.bodySmall)
             }
             Spacer(modifier = Modifier.size(8.dp))
             Text(text = message.body, style = MaterialTheme.typography.bodySmall)

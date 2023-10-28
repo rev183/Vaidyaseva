@@ -1,11 +1,9 @@
 package com.mrknti.vaidyaseva.ui.auth
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
 import com.mrknti.vaidyaseva.data.network.handleError
-import com.mrknti.vaidyaseva.ui.NavArgKeys
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -13,9 +11,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class AuthViewModel(saveState: SavedStateHandle) : ViewModel() {
-    private val authType: String = requireNotNull(saveState[NavArgKeys.AUTH_TYPE])
-    private val _state = MutableStateFlow(AuthUIState(authMode = AuthMode.valueOf(authType)))
+class AuthViewModel : ViewModel() {
+    private val _state = MutableStateFlow(AuthUIState())
     val state = _state.asStateFlow()
 
     private val _actions = MutableStateFlow<AuthActions?>(null)
@@ -32,14 +29,14 @@ class AuthViewModel(saveState: SavedStateHandle) : ViewModel() {
                     _state.value = _state.value.copy(isLoading = false, error = e.message ?: "") }
                 .map {
                     dataManager.saveAuthToken(it.authToken)
-                    dataManager.saveUser(it.userId, it.roles)
+                    dataManager.saveUser(it.userId, it.displayName, it.roles)
                     _state.value = _state.value.copy(isLoading = false)
-                    if (dataManager.isFCMRegistrationPending) {
+                    if (!dataManager.isFCMRegistrationCompleted) {
                         authRepository.registerFCMToken(dataManager.fcmToken.first())
                             .handleError { e ->
                                 _state.value = _state.value.copy(error = e.message ?: "")
                             }.collect {
-                                dataManager.isFCMRegistrationPending = false
+                                dataManager.isFCMRegistrationCompleted = true
                                 _actions.value = AuthActions.Login
                             }
                     } else {

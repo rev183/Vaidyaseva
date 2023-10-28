@@ -1,11 +1,16 @@
 package com.mrknti.vaidyaseva.data.network
 
+import android.util.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.suspendCancellableCoroutine
+import okio.use
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.CallAdapter
 import retrofit2.Callback
+import retrofit2.HttpException
+import retrofit2.Invocation
 import retrofit2.Response
 import java.lang.reflect.Type
 import kotlin.coroutines.resume
@@ -24,10 +29,35 @@ class CoroutineCallAdapter<T>(
                     }
 
                     override fun onResponse(call: Call<T>, response: Response<T>) {
-                        try {
-                            continuation.resume(response.body()!!)
-                        } catch (e: Exception) {
-                            continuation.resumeWithException(e)
+                        if (response.isSuccessful) {
+                            val body = response.body()
+                            if (body == null) {
+                                val invocation = call.request().tag(Invocation::class.java)!!
+                                val method = invocation.method()
+                                val e = KotlinNullPointerException("Response from " +
+                                        method.declaringClass.name +
+                                        '.' +
+                                        method.name +
+                                        " was null but response body type was declared as non-null")
+                                continuation.resumeWithException(e)
+                            } else {
+                                continuation.resume(body)
+                            }
+                        } else {
+                            try {
+                                val errorBodyJson = response.errorBody()?.byteStream().use { stream ->
+                                    val text = stream?.bufferedReader()?.readText()
+                                    Log.e("CoroutineCallAdapter", "Error body: $text")
+                                    text
+                                }
+                                val errorJsonBody = JSONObject(errorBodyJson!!)
+                                val errorBody =
+                                    VsErrorBody(response.code(), errorJsonBody.getString("message"))
+                                continuation.resumeWithException(VsNetworkException(errorBody))
+                            } catch (e: Exception) {
+                                Log.e("CoroutineCallAdapter", "Error parsing error body", e)
+                                continuation.resumeWithException(HttpException(response))
+                            }
                         }
                     }
                 })

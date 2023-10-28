@@ -46,7 +46,7 @@ class ChatDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
             listState = if (page == 1) ListState.LOADING else ListState.PAGINATING
             _state.value = _state.value.copy(listState = listState)
             viewModelScope.launch {
-                chatRepository.getChatDetail(threadId!!, page)
+                chatRepository.getChatDetail(threadId!!, messages.lastOrNull()?.id)
                     .handleError {
                         _state.value =
                             _state.value.copy(listState = ListState.ERROR, error = it.message ?: "")

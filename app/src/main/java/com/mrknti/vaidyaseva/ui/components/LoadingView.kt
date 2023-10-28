@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 
 @Composable
 fun LoadingView(modifier: Modifier = Modifier, delayMillis: Long = 100L, alignment: Alignment = Alignment.Center) {
@@ -16,13 +17,13 @@ fun LoadingView(modifier: Modifier = Modifier, delayMillis: Long = 100L, alignme
             modifier = when (modifier == Modifier) {
                 true -> Modifier.fillMaxSize()
                 false -> modifier
-            }
+            }.zIndex(1f)
         ) {
             val indicatorModifier = when (alignment) {
                 Alignment.Center -> Modifier
                 else -> Modifier.padding(top = 60.dp)
             }
-            ProgressIndicator(modifier = indicatorModifier)
+            ProgressIndicator(modifier = indicatorModifier.zIndex(1f))
         }
     }
 }

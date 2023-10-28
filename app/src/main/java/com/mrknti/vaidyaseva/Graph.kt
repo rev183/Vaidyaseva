@@ -17,18 +17,19 @@
 package com.mrknti.vaidyaseva
 
 import android.annotation.SuppressLint
-import android.app.NotificationManager
 import android.content.Context
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.mrknti.vaidyaseva.data.ApiService
+import com.mrknti.vaidyaseva.data.DataStoreManager
 import com.mrknti.vaidyaseva.data.authentication.AuthRepository
 import com.mrknti.vaidyaseva.data.authentication.AuthRepositoryImpl
-import com.mrknti.vaidyaseva.data.DataStoreManager
 import com.mrknti.vaidyaseva.data.chat.ChatRepository
 import com.mrknti.vaidyaseva.data.chat.ChatRepositoryImpl
 import com.mrknti.vaidyaseva.data.dataModel.EnvelopeConverterFactory
 import com.mrknti.vaidyaseva.data.network.CoroutineCallAdapterFactory
 import com.mrknti.vaidyaseva.data.room.VaidyasevaDatabase
+import com.mrknti.vaidyaseva.data.user.UserRepository
+import com.mrknti.vaidyaseva.data.user.UserRepositoryImpl
 import com.mrknti.vaidyaseva.data.userService.ServiceRepositoryImpl
 import com.mrknti.vaidyaseva.data.userService.ServicesRepository
 import com.mrknti.vaidyaseva.notifications.NotificationsManager
@@ -72,6 +73,9 @@ object Graph {
         private set
 
     lateinit var chatRepository: ChatRepository
+        private set
+
+    lateinit var userRepository: UserRepository
         private set
 
     lateinit var moshi: Moshi
@@ -133,6 +137,7 @@ object Graph {
         authRepository = AuthRepositoryImpl(apiService)
         servicesRepository = ServiceRepositoryImpl(apiService)
         chatRepository = ChatRepositoryImpl(apiService)
+        userRepository = UserRepositoryImpl(apiService)
         notificationsManager = NotificationsManager(context)
 
 //        database = Room.databaseBuilder(context, VaidyasevaDatabase::class.java, "data.db")

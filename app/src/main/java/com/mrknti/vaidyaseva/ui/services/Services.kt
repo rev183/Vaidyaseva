@@ -1,6 +1,5 @@
 package com.mrknti.vaidyaseva.ui.services
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -44,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrknti.vaidyaseva.data.ServiceStatus
 import com.mrknti.vaidyaseva.data.ServiceType
 import com.mrknti.vaidyaseva.data.userService.Service
 import com.mrknti.vaidyaseva.ui.components.LoadingView
@@ -53,6 +53,7 @@ fun Services(modifier: Modifier = Modifier, onServiceClick: (Service) -> Unit) {
     val viewModel: ServicesViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
+    val localContext = LocalContext.current
     val shouldStartPaginate = remember {
         derivedStateOf {
             viewModel.canPaginate && (lazyListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
@@ -65,9 +66,10 @@ fun Services(modifier: Modifier = Modifier, onServiceClick: (Service) -> Unit) {
             viewModel.getServices()
     }
 
-    if (viewState.error.isNotEmpty()) {
-        Log.d("Services", viewState.error)
-        Toast.makeText(LocalContext.current, viewState.error, Toast.LENGTH_SHORT).show()
+    LaunchedEffect(key1 = viewState.error) {
+        if (viewState.error.isNotEmpty()) {
+            Toast.makeText(localContext, viewState.error, Toast.LENGTH_SHORT).show()
+        }
     }
 
     Surface(
@@ -157,15 +159,15 @@ fun ServiceRequestItem(
                     text = "${service.type} service requested by ${service.requester.displayName}",
                     color = MaterialTheme.colorScheme.onPrimary,
                     style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
+                    textAlign = TextAlign.Start,
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 if (service.assignee?.displayName != null && service.isAcknowledged) {
                     Text(
-                        text = "assigned to ${service.assignee.displayName}",
+                        text = "${if (service.status == ServiceStatus.COMPLETED) 
+                            "Completed by" else "Assigned to:"} " + service.assignee.displayName,
                         color = MaterialTheme.colorScheme.onPrimary,
                         style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                 }
@@ -173,7 +175,6 @@ fun ServiceRequestItem(
                     text = "Raised by: ${service.requester.displayName}",
                     color = MaterialTheme.colorScheme.onPrimary,
                     style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
                 )
             }
         }

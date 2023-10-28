@@ -31,4 +31,8 @@ object EventBus {
 
 data class NewChatEvent(val chatMessage: ChatMessage)
 
+data class ServiceAcknowledgeEvent(val service: Service)
 data class ServiceCompletedEvent(val service: Service)
+data class ServiceRaisedEvent(val service: Service)
+
+object UnAuthorizedAccessEvent

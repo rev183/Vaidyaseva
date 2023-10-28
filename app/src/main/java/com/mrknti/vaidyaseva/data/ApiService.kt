@@ -3,15 +3,17 @@ package com.mrknti.vaidyaseva.data
 import com.mrknti.vaidyaseva.data.authentication.AuthData
 import com.mrknti.vaidyaseva.data.chat.ChatMessage
 import com.mrknti.vaidyaseva.data.chat.ChatThread
+import com.mrknti.vaidyaseva.data.user.User
 import com.mrknti.vaidyaseva.data.userService.Service
 import kotlinx.coroutines.flow.Flow
+import okhttp3.MultipartBody
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.Path
+import retrofit2.http.Part
 import retrofit2.http.Query
-import java.util.Date
 
 interface ApiService {
 
@@ -22,19 +24,21 @@ interface ApiService {
         @Field("password") password: String,
     ): Flow<AuthData>
 
-    @POST("signup/{role}")
+    @POST("register")
     @FormUrlEncoded
-    fun signup(
+    fun registerUser(
+        @Field("firstName") firstName: String,
+        @Field("lastName") lastName: String,
         @Field("username") username: String,
         @Field("password") password: String,
-        @Path("role") role: String
+        @Field("role") role: String
     ): Flow<AuthData>
 
     @GET("service-request/open")
-    fun getOpenServices(@Query("pageNumber") pagenum: Int): Flow<List<Service>>
+    fun getOpenServices(@Query("lastServiceId") lastServiceId: Int?): Flow<List<Service>>
 
     @GET("service-request/closed")
-    fun getClosedServices(@Query("pageNumber") pagenum: Int): Flow<List<Service>>
+    fun getClosedServices(@Query("lastServiceId") lastServiceId: Int?): Flow<List<Service>>
 
     @POST("raise-request")
     @FormUrlEncoded
@@ -42,7 +46,7 @@ interface ApiService {
         @Field("requestType") serviceType: String,
         @Field("serviceTime") serviceTime: String,
         @Field("comment") comment: String?,
-    ): Flow<ServiceBooking>
+    ): Flow<Service>
 
     @POST("ack")
     @FormUrlEncoded
@@ -62,7 +66,7 @@ interface ApiService {
     @GET("chat")
     fun getChatDetail(
         @Query("threadId") threadId: Int,
-        @Query("pageNumber") pagenum: Int
+        @Query("lastMessageId") lastMessageId: Int?
     ): Flow<ChatThread>
 
     @POST("chat")
@@ -77,4 +81,17 @@ interface ApiService {
     fun registerFCMToken(
         @Field("registrationToken") token: String
     ): Flow<Unit>
+
+    @POST("upload")
+    @Multipart
+    fun uploadDocument(
+        @Part("userId") clientId: Int,
+        @Part("documentType") documentType: Int,
+        @Part data: MultipartBody.Part
+    ): Flow<Unit>
+
+    @GET("search/user")
+    fun searchUser(
+        @Query("searchQuery") query: String
+    ): Flow<List<User>>
 }
