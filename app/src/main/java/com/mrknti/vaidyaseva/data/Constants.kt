@@ -2,6 +2,8 @@ package com.mrknti.vaidyaseva.data
 
 import java.util.Locale
 
+const val HOST_URL = "http://35.207.46.206:8080/"
+
 object UserRoles {
     const val CLIENT = "CLIENT"
     const val ADMIN = "ADMIN"
@@ -57,6 +59,21 @@ enum class ServiceTypeUI(val value: String) {
     }
 }
 
+enum class OccupancyStatus(val value: Int) {
+    BOOKED(1),
+    CHECK_IN(2);
+
+    companion object {
+        fun getByValue(value: Int): OccupancyStatus? {
+            return when (value) {
+                1 -> BOOKED
+                2 -> CHECK_IN
+                else -> null
+            }
+        }
+    }
+}
+
 object ServiceStatus {
     const val RAISED = "RAISED"
     const val COMPLETED = "COMPLETED"
@@ -66,6 +83,8 @@ object UserDocumentType {
     const val PASSPORT = 0
     const val VISA = 1
 }
+
+fun getDocumentUrl(id: Int) = "${HOST_URL}file/data?documentId=$id"
 
 object HttpCodes {
     const val UNAUTHORIZED = 401

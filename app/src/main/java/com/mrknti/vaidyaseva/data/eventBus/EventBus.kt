@@ -1,5 +1,6 @@
 package com.mrknti.vaidyaseva.data.eventBus
 
+import android.net.Uri
 import android.util.Log
 import com.mrknti.vaidyaseva.data.chat.ChatMessage
 import com.mrknti.vaidyaseva.data.userService.Service
@@ -29,10 +30,16 @@ object EventBus {
     }
 }
 
+// New chat event
 data class NewChatEvent(val chatMessage: ChatMessage)
 
+// Service events
 data class ServiceAcknowledgeEvent(val service: Service)
 data class ServiceCompletedEvent(val service: Service)
 data class ServiceRaisedEvent(val service: Service)
 
+// Unauthorized access event
 object UnAuthorizedAccessEvent
+
+// document upload event
+data class DocumentUploadEvent(val userId:Int, val documentType: Int, val documentUri: Uri?)

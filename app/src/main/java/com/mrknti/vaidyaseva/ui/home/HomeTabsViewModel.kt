@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class HomeTabsViewModel : ViewModel() {
-    private val _state = MutableStateFlow(HomeViewState())
+    private val _state = MutableStateFlow(HomeTabsViewState())
     val state = _state.asStateFlow()
     private val dataStoreManager = Graph.dataStoreManager
     private val authFlow = dataStoreManager.authToken.map {
@@ -41,7 +41,7 @@ class HomeTabsViewModel : ViewModel() {
 
 }
 
-data class HomeViewState(
+data class HomeTabsViewState(
     val selfUser: User? = null,
     val loginState: LoginState = LoginState.Loading
 )

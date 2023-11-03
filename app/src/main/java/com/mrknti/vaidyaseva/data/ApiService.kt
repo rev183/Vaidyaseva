@@ -1,9 +1,12 @@
 package com.mrknti.vaidyaseva.data
 
 import com.mrknti.vaidyaseva.data.authentication.AuthData
+import com.mrknti.vaidyaseva.data.building.BuildingData
+import com.mrknti.vaidyaseva.data.building.RoomOccupancy
 import com.mrknti.vaidyaseva.data.chat.ChatMessage
 import com.mrknti.vaidyaseva.data.chat.ChatThread
 import com.mrknti.vaidyaseva.data.user.User
+import com.mrknti.vaidyaseva.data.user.UserDocument
 import com.mrknti.vaidyaseva.data.userService.Service
 import kotlinx.coroutines.flow.Flow
 import okhttp3.MultipartBody
@@ -94,4 +97,27 @@ interface ApiService {
     fun searchUser(
         @Query("searchQuery") query: String
     ): Flow<List<User>>
+
+    @GET("building-grid")
+    fun getBuildings(): Flow<List<BuildingData>>
+
+    @GET("building-data")
+    fun getBuildingDetail(
+        @Query("buildingId") buildingId: Int
+    ): Flow<BuildingData>
+
+    @POST("book/room")
+    @FormUrlEncoded
+    fun bookRoom(
+        @Field("roomId") roomId: Int,
+        @Field("occupantId") occupantId: Int,
+        @Field("checkInTime") checkIn: String,
+        @Field("checkOutTime") checkOut: String
+    ): Flow<RoomOccupancy>
+
+    @GET("get-all")
+    fun getAllDocuments(
+        @Query("userId") userId: Int
+    ): Flow<List<UserDocument>>
+
 }

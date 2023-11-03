@@ -52,14 +52,13 @@ import androidx.navigation.compose.rememberNavController
 import com.google.firebase.messaging.FirebaseMessaging
 import com.mrknti.vaidyaseva.Graph
 import com.mrknti.vaidyaseva.R
+import com.mrknti.vaidyaseva.data.building.BuildingData
 import com.mrknti.vaidyaseva.data.chat.ChatThread
 import com.mrknti.vaidyaseva.data.user.User
 import com.mrknti.vaidyaseva.data.userService.Service
-import com.mrknti.vaidyaseva.ui.Home
 import com.mrknti.vaidyaseva.ui.Inbox
 import com.mrknti.vaidyaseva.ui.NavGraph
 import com.mrknti.vaidyaseva.ui.Screen
-import com.mrknti.vaidyaseva.ui.ServiceRequest
 import com.mrknti.vaidyaseva.ui.components.LoadingView
 import com.mrknti.vaidyaseva.ui.services.Services
 import kotlinx.coroutines.launch
@@ -132,6 +131,7 @@ fun HomeNavHost(
     navigateToBooking: (ServiceRequest) -> Unit,
     navigateToChatDetail: (ChatThread) -> Unit,
     navigateToServiceDetail: (Service) -> Unit,
+    navigateToBuildingDetail: (BuildingData) -> Unit,
 ) {
     NavHost(
         navController = navController,
@@ -141,9 +141,22 @@ fun HomeNavHost(
         val modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues = paddingValues)
-        composable(Screen.Home.route) { Home(modifier, navigateToBooking = navigateToBooking) }
-        composable(Screen.Services.route) { Services(modifier, onServiceClick = navigateToServiceDetail) }
-        composable(Screen.Inbox.route) { Inbox(modifier, onChatClick = navigateToChatDetail) }
+        composable(Screen.Home.route) {
+            Home(
+                modifier,
+                navigateToBooking = navigateToBooking,
+                navigateToBuildingDetail = navigateToBuildingDetail
+            )
+        }
+        composable(Screen.Services.route) {
+            Services(
+                modifier,
+                onServiceClick = navigateToServiceDetail
+            )
+        }
+        composable(Screen.Inbox.route) {
+            Inbox(modifier, onChatClick = navigateToChatDetail)
+        }
     }
 }
 
@@ -231,13 +244,15 @@ fun HomeBottomTabs(navController: NavHostController) {
                         paddingValues = paddingValues,
                         navigateToBooking = { navController.navigate("${Screen.BookServices.route}/${it.type}}") },
                         navigateToChatDetail = { navController.navigate("${Screen.ChatDetail.route}/${it.id}}") },
-                        navigateToServiceDetail =
-                        {
+                        navigateToServiceDetail = {
                             val moshi = Graph.moshi
                             val jsonAdapter = moshi.adapter(Service::class.java)
                             val serviceJson = jsonAdapter.toJson(it)
                             navController.navigate("${Screen.ServiceDetail.route}/${serviceJson}}")
                         },
+                        navigateToBuildingDetail = {
+                            navController.navigate("${Screen.BuildingDetail.route}/${it.id}}")
+                        }
                     )
                 }
             }

@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.mrknti.vaidyaseva.ui.auth.LoginPage
+import com.mrknti.vaidyaseva.ui.building.BuildingDetail
 import com.mrknti.vaidyaseva.ui.chats.ChatDetail
 import com.mrknti.vaidyaseva.ui.home.HomeBottomTabs
 import com.mrknti.vaidyaseva.ui.onboarding.DocumentUpload
@@ -29,6 +30,7 @@ sealed class Screen(val route: String) {
     data object OnboardUser : Screen("onboard_user")
     data object DocUpload : Screen("doc_upload")
     data object UserSearch : Screen("user_search")
+    data object BuildingDetail : Screen("building_detail")
 }
 
 object NavGraph {
@@ -42,6 +44,7 @@ object NavArgKeys {
     const val CHAT_THREAD_ID = "thread_id"
     const val SERVICE_DATA = "service_data"
     const val USER_DATA = "user_data"
+    const val BUILDING_ID = "building_id"
 }
 
 @Composable
@@ -100,7 +103,7 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
             ServiceDetail()
         }
         composable(route = Screen.OnboardUser.route) {
-            OnboardClient {userJson ->
+            OnboardClient { userJson ->
                 navController.navigate(docUploadRoute(userJson))
             }
         }
@@ -114,7 +117,19 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
             DocumentUpload()
         }
         composable(route = Screen.UserSearch.route) {
-            UserSearch()
+            UserSearch { userJson ->
+                navController.navigate(docUploadRoute(userJson))
+            }
+        }
+        composable(
+            route = "${Screen.BuildingDetail.route}/{${NavArgKeys.BUILDING_ID}}}",
+            arguments = listOf(
+                navArgument(NavArgKeys.BUILDING_ID) {
+                    type = NavType.IntType
+                }
+            )
+        ) {
+            BuildingDetail()
         }
     }
 }

@@ -33,7 +33,7 @@ class ServiceDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
     val state = _state.asStateFlow()
     val canCompleteService = service.assignee?.id == selfUser?.id
     val canAcknowledgeService =
-        !service.isAcknowledged && canAssignToUser(selfUser?.role ?: emptyList())
+        !service.isAcknowledged && canAssignToUser(selfUser?.roles ?: emptyList())
 
     fun onAcknowledgeCompleteClick() {
         _state.value = _state.value.copy(isLoading = true)

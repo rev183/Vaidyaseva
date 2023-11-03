@@ -1,20 +1,27 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.mrknti.vaidyaseva.ui
+package com.mrknti.vaidyaseva.ui.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Build
@@ -22,11 +29,13 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -35,12 +44,35 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrknti.vaidyaseva.data.ServiceType
+import com.mrknti.vaidyaseva.data.building.BuildingData
+import com.mrknti.vaidyaseva.ui.building.BuildingDetailHeader
 
 @Composable
-fun Home(modifier: Modifier = Modifier, navigateToBooking: (ServiceRequest) -> Unit) {
-    Surface(modifier = modifier.fillMaxSize()) {
+fun Home(
+    modifier: Modifier = Modifier,
+    navigateToBooking: (ServiceRequest) -> Unit,
+    navigateToBuildingDetail: (BuildingData) -> Unit
+) {
+    val viewModel: HomeViewModel = viewModel()
+    val viewState by viewModel.state.collectAsStateWithLifecycle()
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(Unit) {
+        viewModel.getBuildingsData()
+    }
+
+    Column(modifier = modifier
+        .fillMaxSize()
+        .scrollable(scrollState, Orientation.Vertical)) {
         ServicesToBook(navigateToBooking = navigateToBooking)
+        Spacer(modifier = Modifier.size(16.dp))
+        BuildingInfo(
+            buildings = viewState.buildings,
+            navigateToBuildingDetail = navigateToBuildingDetail
+        )
     }
 }
 
@@ -48,7 +80,7 @@ fun Home(modifier: Modifier = Modifier, navigateToBooking: (ServiceRequest) -> U
 fun ServicesToBook(navigateToBooking: (ServiceRequest) -> Unit) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(16.dp)
     ) {
         Text(text = "Book services", modifier = Modifier.padding(bottom = 16.dp))
@@ -98,6 +130,33 @@ fun ServiceRequestItem(
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
             )
+        }
+    }
+}
+
+@Composable
+fun BuildingInfo(buildings: List<BuildingData>, navigateToBuildingDetail: (BuildingData) -> Unit) {
+    val listState = rememberLazyListState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(text = "Building info", modifier = Modifier.padding(bottom = 16.dp))
+        LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(buildings, key = { it.id }) { building ->
+                BuildingCard(buildingData = building, navigateToBuildingDetail = navigateToBuildingDetail)
+            }
+        }
+    }
+}
+
+@Composable
+fun BuildingCard(buildingData: BuildingData, navigateToBuildingDetail: (BuildingData) -> Unit) {
+    Card(onClick = { navigateToBuildingDetail(buildingData) }, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            BuildingDetailHeader(buildingData)
         }
     }
 }

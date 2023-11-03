@@ -4,4 +4,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
     suspend fun searchUser(query: String): Flow<List<User>>
+    suspend fun getAllDocuments(userId: Int): Flow<List<UserDocument>>
 }

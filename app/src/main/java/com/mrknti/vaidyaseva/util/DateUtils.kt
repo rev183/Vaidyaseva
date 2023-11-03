@@ -7,6 +7,8 @@ import java.util.Date
 
 object DateFormat {
     const val HOUR_DAY_MONTH = "h:mm a, dd MMM"
+    const val DAY_MONTH = "dd/MM"
+    const val DAY_MONTH_YEAR = "dd/MM/yy"
 }
 
 val TODAY_START: Long
@@ -25,4 +27,9 @@ fun convertToISO8601(date: Date): String {
 fun Date.formatDate(pattern: String): String {
     val dateFormatter = SimpleDateFormat(pattern, LOCALE_IN)
     return dateFormatter.format(this)
+}
+
+fun Date.differenceInHours(): Long {
+    val diff = Date().time - this.time
+    return diff / (60 * 60 * 1000)
 }

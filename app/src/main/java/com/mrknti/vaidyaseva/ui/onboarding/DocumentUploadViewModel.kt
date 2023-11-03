@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
 import com.mrknti.vaidyaseva.data.UserDocumentType
+import com.mrknti.vaidyaseva.data.eventBus.DocumentUploadEvent
+import com.mrknti.vaidyaseva.data.eventBus.EventBus
 import com.mrknti.vaidyaseva.data.network.handleError
 import com.mrknti.vaidyaseva.data.user.User
 import com.mrknti.vaidyaseva.filehandling.MediaData
@@ -47,6 +49,14 @@ class DocumentUploadViewModel(saveState: SavedStateHandle) : ViewModel() {
                     } else {
                         _state.value = _state.value.copy(isVisaUploaded = true,)
                     }
+                    EventBus.publish(
+                        DocumentUploadEvent(
+                            user.id,
+                            type,
+                            if (type == UserDocumentType.PASSPORT) state.value.passportUri
+                            else state.value.visaUri
+                        )
+                    )
                 }
         }
     }

@@ -184,7 +184,7 @@ fun UploadDocument(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         IconButton(onClick = { onSelectDocumentClick(docType) }, modifier = Modifier.fillMaxWidth()) {
-            Row() {
+            Row {
                 Text(
                     text = "Select ${if (docType == UserDocumentType.PASSPORT) "Passport" else "Visa"} Image",
                     style = MaterialTheme.typography.bodyLarge

@@ -21,8 +21,11 @@ import android.content.Context
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.mrknti.vaidyaseva.data.ApiService
 import com.mrknti.vaidyaseva.data.DataStoreManager
+import com.mrknti.vaidyaseva.data.HOST_URL
 import com.mrknti.vaidyaseva.data.authentication.AuthRepository
 import com.mrknti.vaidyaseva.data.authentication.AuthRepositoryImpl
+import com.mrknti.vaidyaseva.data.building.BuildingRepository
+import com.mrknti.vaidyaseva.data.building.BuildingRepositoryImpl
 import com.mrknti.vaidyaseva.data.chat.ChatRepository
 import com.mrknti.vaidyaseva.data.chat.ChatRepositoryImpl
 import com.mrknti.vaidyaseva.data.dataModel.EnvelopeConverterFactory
@@ -78,6 +81,9 @@ object Graph {
     lateinit var userRepository: UserRepository
         private set
 
+    lateinit var buildingRepository: BuildingRepository
+        private set
+
     lateinit var moshi: Moshi
         private set
 
@@ -125,7 +131,7 @@ object Graph {
             .build()
 
         retrofit = Retrofit.Builder()
-            .baseUrl("http://35.207.46.206:8080/")
+            .baseUrl(HOST_URL)
             .addCallAdapterFactory(CoroutineCallAdapterFactory())
             .addConverterFactory(EnvelopeConverterFactory())
             .addConverterFactory(MoshiConverterFactory.create(moshi))
@@ -138,6 +144,8 @@ object Graph {
         servicesRepository = ServiceRepositoryImpl(apiService)
         chatRepository = ChatRepositoryImpl(apiService)
         userRepository = UserRepositoryImpl(apiService)
+        buildingRepository = BuildingRepositoryImpl(apiService)
+
         notificationsManager = NotificationsManager(context)
 
 //        database = Room.databaseBuilder(context, VaidyasevaDatabase::class.java, "data.db")
