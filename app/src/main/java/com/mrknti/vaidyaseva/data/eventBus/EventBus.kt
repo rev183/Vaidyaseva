@@ -2,6 +2,7 @@ package com.mrknti.vaidyaseva.data.eventBus
 
 import android.net.Uri
 import android.util.Log
+import com.mrknti.vaidyaseva.data.building.RoomOccupancy
 import com.mrknti.vaidyaseva.data.chat.ChatMessage
 import com.mrknti.vaidyaseva.data.userService.Service
 import kotlinx.coroutines.ensureActive
@@ -43,3 +44,6 @@ object UnAuthorizedAccessEvent
 
 // document upload event
 data class DocumentUploadEvent(val userId:Int, val documentType: Int, val documentUri: Uri?)
+
+// building events
+data class RoomBookedEvent(val occupancy: RoomOccupancy)

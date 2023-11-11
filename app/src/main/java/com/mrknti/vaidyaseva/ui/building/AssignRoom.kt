@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,11 +63,20 @@ fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: Sheet
     val searchQuery by searchViewModel.searchQuery.collectAsStateWithLifecycle(initialValue = "")
     val searchViewState by searchViewModel.state.collectAsStateWithLifecycle()
     val viewActions by searchViewModel.action.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
-    if (viewActions == UserSearchViewAction.RoomBooked) {
-        Toast.makeText(LocalContext.current, "Room booked successfully", Toast.LENGTH_LONG)
-            .show()
-        onDismissRequest()
+    LaunchedEffect(key1 = viewActions) {
+        if (viewActions == UserSearchViewAction.RoomBooked) {
+            Toast.makeText(context, "Room booked successfully", Toast.LENGTH_LONG)
+                .show()
+            onDismissRequest()
+        }
+    }
+
+    LaunchedEffect(key1 = searchViewState.errorMessage) {
+        if (searchViewState.errorMessage.isNotEmpty()) {
+            Toast.makeText(context, searchViewState.errorMessage, Toast.LENGTH_LONG).show()
+        }
     }
 
     ModalBottomSheet(

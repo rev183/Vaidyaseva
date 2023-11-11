@@ -30,6 +30,6 @@ fun Date.formatDate(pattern: String): String {
 }
 
 fun Date.differenceInHours(): Long {
-    val diff = Date().time - this.time
+    val diff = this.time - Date().time
     return diff / (60 * 60 * 1000)
 }

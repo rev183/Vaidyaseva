@@ -8,6 +8,7 @@ import com.mrknti.vaidyaseva.data.UserDocumentType
 import com.mrknti.vaidyaseva.data.building.HostelRoom
 import com.mrknti.vaidyaseva.data.eventBus.DocumentUploadEvent
 import com.mrknti.vaidyaseva.data.eventBus.EventBus
+import com.mrknti.vaidyaseva.data.eventBus.RoomBookedEvent
 import com.mrknti.vaidyaseva.data.getDocumentUrl
 import com.mrknti.vaidyaseva.data.network.handleError
 import com.mrknti.vaidyaseva.data.user.User
@@ -108,6 +109,7 @@ class UserSearchViewModel : ViewModel() {
                 .collect {
                     _state.value = _state.value.copy(selectedUser = null)
                     _action.emit(UserSearchViewAction.RoomBooked)
+                    EventBus.publish(RoomBookedEvent(it))
                 }
         }
     }

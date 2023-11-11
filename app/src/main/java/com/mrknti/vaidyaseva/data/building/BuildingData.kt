@@ -1,5 +1,6 @@
 package com.mrknti.vaidyaseva.data.building
 
+import com.mrknti.vaidyaseva.data.user.User
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
@@ -7,7 +8,7 @@ import com.squareup.moshi.JsonClass
 data class BuildingData(
     val id: Int,
     val name: String?,
-    val managerName: String?,
+    val manager: User?,
     @Json(name = "checkInCount")
     val numOccupiedRooms: Int?,
     @Json(name = "freeCount")

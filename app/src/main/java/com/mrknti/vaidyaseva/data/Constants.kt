@@ -48,6 +48,7 @@ enum class ServiceTypeUI(val value: String) {
         }
 
     fun canBeAssignedTo(role: String): Boolean {
+        if (role == UserRoles.SUPER_USER) return true
         return when (this) {
             CAB -> role == UserRoles.TRANSPORT
             CLEANING -> role == UserRoles.HOUSEKEEPING

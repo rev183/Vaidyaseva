@@ -72,16 +72,19 @@ class DataStoreManager(context: Context) {
     }
 
     fun getUser(): Flow<User?> {
-        return dataStore.data.map { preferences ->
-            preferences[USER_ID]
-        }.combine(
+        return combine(
+            dataStore.data.map { preferences ->
+                preferences[USER_ID]
+            },
             dataStore.data.map { preferences ->
                 preferences[USER_DISPLAY_NAME]
+            },
+            dataStore.data.map { preferences ->
+                preferences[USER_ROLES]
             }
-        ) {
-            id, displayName ->
+        ) { id, displayName, roles ->
             if (id != null && displayName != null) {
-                User(id, displayName = displayName)
+                User(id, displayName = displayName, roles = roles?.toList())
             } else {
                 null
             }

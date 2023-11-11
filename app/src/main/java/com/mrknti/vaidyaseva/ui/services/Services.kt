@@ -49,8 +49,13 @@ import com.mrknti.vaidyaseva.data.userService.Service
 import com.mrknti.vaidyaseva.ui.components.LoadingView
 
 @Composable
-fun Services(modifier: Modifier = Modifier, onServiceClick: (Service) -> Unit) {
-    val viewModel: ServicesViewModel = viewModel()
+fun Services(
+    modifier: Modifier = Modifier,
+    onServiceClick: (Service) -> Unit,
+    serviceType: String
+) {
+    val viewModel: ServicesViewModel =
+        viewModel(key = serviceType, factory = ServicesViewModelFactory(serviceType))
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
     val localContext = LocalContext.current
@@ -75,7 +80,7 @@ fun Services(modifier: Modifier = Modifier, onServiceClick: (Service) -> Unit) {
     Surface(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp)
     ) {
         LazyColumn(state = lazyListState, verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(items = viewState.services, key = { it.id }) {
@@ -137,7 +142,7 @@ fun ServiceRequestItem(
         modifier = modifier
             .shadow(4.dp, shape = MaterialTheme.shapes.medium)
             .zIndex(4.dp.value)
-            .background(color = MaterialTheme.colorScheme.surfaceTint)
+            .background(color = MaterialTheme.colorScheme.secondary)
             .clickable { onServiceClick(service) },
         contentAlignment = Alignment.Center
     ) {
@@ -146,7 +151,7 @@ fun ServiceRequestItem(
                 imageVector = getIconForServiceType(service.type),
                 modifier = Modifier.size(24.dp),
                 contentDescription = null,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSecondary)
             )
             Column(
                 horizontalAlignment = Alignment.Start,
@@ -157,7 +162,7 @@ fun ServiceRequestItem(
             ) {
                 Text(
                     text = "${service.type} service requested by ${service.requester.displayName}",
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = MaterialTheme.colorScheme.onSecondary,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Start,
                 )
@@ -166,14 +171,14 @@ fun ServiceRequestItem(
                     Text(
                         text = "${if (service.status == ServiceStatus.COMPLETED) 
                             "Completed by" else "Assigned to:"} " + service.assignee.displayName,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = MaterialTheme.colorScheme.onSecondary,
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                 }
                 Text(
                     text = "Raised by: ${service.requester.displayName}",
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = MaterialTheme.colorScheme.onSecondary,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

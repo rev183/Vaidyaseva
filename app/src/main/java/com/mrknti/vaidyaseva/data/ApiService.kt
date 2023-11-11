@@ -35,7 +35,7 @@ interface ApiService {
         @Field("username") username: String,
         @Field("password") password: String,
         @Field("role") role: String
-    ): Flow<AuthData>
+    ): Flow<User>
 
     @GET("service-request/open")
     fun getOpenServices(@Query("lastServiceId") lastServiceId: Int?): Flow<List<Service>>

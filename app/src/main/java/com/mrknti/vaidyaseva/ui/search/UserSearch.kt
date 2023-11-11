@@ -178,8 +178,6 @@ fun SelectedUserDetails(
     } }
 
     Column(modifier = modifier.padding(top = 8.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)) {
-        Text(text = "Selected User-", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.size(8.dp))
         Text(text = user.displayName, style = MaterialTheme.typography.titleSmall)
         Spacer(modifier = Modifier.size(4.dp))
         Text(text = "Roles: ${user.roles?.joinToString(", ")}")

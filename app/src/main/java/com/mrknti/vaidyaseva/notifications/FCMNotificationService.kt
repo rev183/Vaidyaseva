@@ -39,10 +39,15 @@ class FCMNotificationService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
-        Log.d("FCM", "onMessageReceived: ${message.data}")
-        val notificationData =
-            Graph.moshi.adapter(NotificationData::class.java).fromJson(message.data["data"]!!)!!
-        val notificationsManager = Graph.notificationsManager
-        notificationsManager.handleNotification(notificationData)
+        Log.d(TAG, "onMessageReceived: ${message.data}")
+        try {
+            val notificationData =
+                Graph.moshi.adapter(NotificationData::class.java).fromJson(message.data["data"]!!)!!
+            val notificationsManager = Graph.notificationsManager
+            notificationsManager.handleNotification(notificationData)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to handle notification", e)
+        }
+
     }
 }

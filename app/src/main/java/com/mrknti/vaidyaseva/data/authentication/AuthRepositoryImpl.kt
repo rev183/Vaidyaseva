@@ -2,6 +2,7 @@ package com.mrknti.vaidyaseva.data.authentication
 
 import com.mrknti.vaidyaseva.data.ApiService
 import com.mrknti.vaidyaseva.data.extensions.createMultiPartData
+import com.mrknti.vaidyaseva.data.user.User
 import com.mrknti.vaidyaseva.filehandling.MediaData
 import kotlinx.coroutines.flow.Flow
 
@@ -16,7 +17,7 @@ class AuthRepositoryImpl(private val apiService: ApiService) : AuthRepository {
         username: String,
         password: String,
         role: String
-    ): Flow<AuthData> =
+    ): Flow<User> =
         apiService.registerUser(firstName, lastName, username, password, role)
 
     override suspend fun registerFCMToken(token: String): Flow<Unit> =

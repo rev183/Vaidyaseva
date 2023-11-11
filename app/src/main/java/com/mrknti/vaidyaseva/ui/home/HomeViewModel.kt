@@ -7,12 +7,15 @@ import com.mrknti.vaidyaseva.data.building.BuildingData
 import com.mrknti.vaidyaseva.data.network.handleError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class HomeViewModel : ViewModel() {
     private val _state = MutableStateFlow(HomeViewState())
     val state = _state.asStateFlow()
     private val buildingRepository = Graph.buildingRepository
+    val role = runBlocking { Graph.dataStoreManager.getUser().first() }?.roles
 
     fun getBuildingsData() {
         _state.value = _state.value.copy(isLoading = true)

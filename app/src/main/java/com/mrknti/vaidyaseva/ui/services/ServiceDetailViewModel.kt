@@ -29,8 +29,10 @@ class ServiceDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
     private val dataStoreManager = Graph.dataStoreManager
     private val service = jsonAdapter.fromJson(serviceJson)!!
     private val selfUser = runBlocking { Graph.dataStoreManager.getUser().first() }
+
     private val _state = MutableStateFlow(ServiceDetailUIState(service = service))
     val state = _state.asStateFlow()
+
     val canCompleteService = service.assignee?.id == selfUser?.id
     val canAcknowledgeService =
         !service.isAcknowledged && canAssignToUser(selfUser?.roles ?: emptyList())

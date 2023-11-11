@@ -47,6 +47,7 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrknti.vaidyaseva.data.ServiceType
+import com.mrknti.vaidyaseva.data.UserRoles
 import com.mrknti.vaidyaseva.data.building.BuildingData
 import com.mrknti.vaidyaseva.ui.building.BuildingDetailHeader
 
@@ -61,7 +62,10 @@ fun Home(
     val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
-        viewModel.getBuildingsData()
+        if (viewModel.role?.contains(UserRoles.ADMIN) == true
+            || viewModel.role?.contains(UserRoles.SUPER_USER) == true) {
+            viewModel.getBuildingsData()
+        }
     }
 
     Column(modifier = modifier
@@ -108,7 +112,7 @@ fun ServiceRequestItem(
         modifier = modifier
             .shadow(4.dp, shape = MaterialTheme.shapes.medium)
             .zIndex(4.dp.value)
-            .background(color = MaterialTheme.colorScheme.surfaceTint)
+            .background(color = MaterialTheme.colorScheme.tertiaryContainer)
             .clickable { navigateToBooking(serviceRequest) },
         contentAlignment = Alignment.Center
     ) {
@@ -121,12 +125,12 @@ fun ServiceRequestItem(
                 imageVector = serviceRequest.icon,
                 modifier = Modifier.size(40.dp),
                 contentDescription = null,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onTertiaryContainer)
             )
             Text(
                 text = serviceRequest.title,
                 modifier = Modifier.padding(top = 8.dp),
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
             )
@@ -141,7 +145,7 @@ fun BuildingInfo(buildings: List<BuildingData>, navigateToBuildingDetail: (Build
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp)
     ) {
         Text(text = "Building info", modifier = Modifier.padding(bottom = 16.dp))
         LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(12.dp)) {

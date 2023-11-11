@@ -48,7 +48,7 @@ import java.util.Calendar
 import java.util.Date
 
 @Composable
-fun BookService(modifier: Modifier = Modifier) {
+fun BookService(modifier: Modifier = Modifier, onFinishClick: () -> Unit) {
     val viewModel: BookServiceViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val request = viewModel.serviceBooking
@@ -59,6 +59,12 @@ fun BookService(modifier: Modifier = Modifier) {
     } else if (viewState.error.isNotEmpty()) {
         LaunchedEffect(key1 = viewState.error) {
             Toast.makeText(context, viewState.error, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LaunchedEffect(key1 = viewModel.action) {
+        if (viewModel.action.value == ServiceBookingAction.BookingComplete) {
+            onFinishClick()
         }
     }
 

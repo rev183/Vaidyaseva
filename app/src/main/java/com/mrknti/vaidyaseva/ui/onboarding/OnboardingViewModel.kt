@@ -34,9 +34,8 @@ class OnboardingViewModel() : ViewModel() {
                     _state.value = _state.value.copy(isLoading = false, error = it.message ?: "")
             }
             .collect {
-                val user = User(it.userId, _state.value.username, _state.value.username)
                 _state.value =
-                    _state.value.copy(isLoading = false, userJson = userJsonAdapter.toJson(user))
+                    _state.value.copy(isLoading = false, userJson = userJsonAdapter.toJson(it))
                 _actions.value = OnboardActions.Signup
             }
         }

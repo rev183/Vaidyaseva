@@ -1,5 +1,6 @@
 package com.mrknti.vaidyaseva.data.authentication
 
+import com.mrknti.vaidyaseva.data.user.User
 import com.mrknti.vaidyaseva.filehandling.MediaData
 import kotlinx.coroutines.flow.Flow
 
@@ -15,7 +16,7 @@ interface AuthRepository {
         username: String,
         password: String,
         role: String
-    ): Flow<AuthData>
+    ): Flow<User>
 
     suspend fun uploadDocument(
         clientId: Int,

@@ -29,6 +29,7 @@ fun ServiceDetail() {
     val viewModel: ServiceDetailViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val service = viewState.service
+
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(

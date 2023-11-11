@@ -82,7 +82,9 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
                 navArgument(NavArgKeys.SERVICE_TYPE) { type = NavType.StringType }
             )
         ) {
-            BookService()
+            BookService {
+                navController.popBackStack(Screen.HomeTabs.route, false)
+            }
         }
         composable(
             route = "${Screen.ChatDetail.route}/{${NavArgKeys.CHAT_THREAD_ID}}}",
@@ -114,7 +116,9 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
                 }
             )
         ) {
-            DocumentUpload()
+            DocumentUpload {
+                navController.popBackStack(Screen.HomeTabs.route, false)
+            }
         }
         composable(route = Screen.UserSearch.route) {
             UserSearch { userJson ->

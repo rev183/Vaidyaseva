@@ -21,6 +21,8 @@ class BookServiceViewModel(saveState: SavedStateHandle) : ViewModel() {
     }))
     val state = _state.asStateFlow()
     val serviceBooking = HOME_SERVICE[state.value.serviceType]!!
+    private val _action = MutableStateFlow<ServiceBookingAction?>(null)
+    val action = _action.asStateFlow()
 
     fun bookService() {
         val message = _state.value.message
@@ -32,6 +34,7 @@ class BookServiceViewModel(saveState: SavedStateHandle) : ViewModel() {
                 }
                 .collect {
                     _state.value = _state.value.copy(isLoading = false)
+                    _action.value = ServiceBookingAction.BookingComplete
                     EventBus.publish(ServiceRaisedEvent(it))
                 }
         }
@@ -53,3 +56,8 @@ data class BookServiceUIState(
     val serviceDate: Date? = null,
     val isLoading: Boolean = false
 )
+
+
+sealed class ServiceBookingAction {
+    data object BookingComplete : ServiceBookingAction()
+}

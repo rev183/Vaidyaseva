@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
 import com.mrknti.vaidyaseva.data.building.BuildingData
+import com.mrknti.vaidyaseva.data.building.HostelRoom
+import com.mrknti.vaidyaseva.data.eventBus.EventBus
+import com.mrknti.vaidyaseva.data.eventBus.RoomBookedEvent
 import com.mrknti.vaidyaseva.data.network.handleError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +21,12 @@ class BuildingDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
 
     init {
         getBuildingData()
+
+        viewModelScope.launch {
+            EventBus.subscribe<RoomBookedEvent> {
+                getBuildingData()
+            }
+        }
     }
 
     private fun getBuildingData() {
@@ -28,7 +37,11 @@ class BuildingDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
                     _state.value = _state.value.copy(isLoading = false, errorMessage = it.message)
                 }
                 .collect {
-                    _state.value = _state.value.copy(buildingData = it, isLoading = false)
+                    _state.value = _state.value.copy(
+                        buildingData = it,
+                        isLoading = false,
+                        rooms = it.rooms ?: emptyList()
+                    )
                 }
         }
     }
@@ -39,4 +52,5 @@ data class BuildingDetailViewState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val buildingData: BuildingData? = null,
+    val rooms: List<HostelRoom> = emptyList()
 )

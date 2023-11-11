@@ -6,8 +6,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
+import com.mrknti.vaidyaseva.data.ServiceStatus
 import com.mrknti.vaidyaseva.data.eventBus.EventBus
 import com.mrknti.vaidyaseva.data.eventBus.ServiceAcknowledgeEvent
 import com.mrknti.vaidyaseva.data.eventBus.ServiceCompletedEvent
@@ -18,7 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class ServicesViewModel : ViewModel() {
+class ServicesViewModel(private val serviceStatus: String) : ViewModel() {
     private val servicesRepository = Graph.servicesRepository
     private val _state = MutableStateFlow(ServicesUIState())
     val state = _state.asStateFlow()
@@ -32,9 +34,16 @@ class ServicesViewModel : ViewModel() {
             EventBus.subscribe<ServiceCompletedEvent> { event ->
                 val updatedService = event.service
                 val index = serviceList.indexOfFirst { it.id == updatedService.id }
-                if (index != -1) {
-                    serviceList[index] = updatedService
-                    _state.value = _state.value.copy(services = serviceList)
+                if (serviceStatus == ServiceStatus.COMPLETED) {
+                    if (index != -1) {
+                        serviceList.removeAt(index)
+                        _state.value = _state.value.copy(services = serviceList)
+                    }
+                } else {
+                    if (index == -1) {
+                        serviceList.add(0, updatedService)
+                        _state.value = _state.value.copy(services = serviceList)
+                    }
                 }
             }
 
@@ -64,7 +73,12 @@ class ServicesViewModel : ViewModel() {
             listState = if (page == 1) ListState.LOADING else ListState.PAGINATING
             _state.value = _state.value.copy(listState = listState)
             viewModelScope.launch {
-                servicesRepository.getOpenServices(serviceList.lastOrNull()?.id)
+                val servicesFlow = if (serviceStatus == ServiceStatus.RAISED) {
+                    servicesRepository.getOpenServices(serviceList.lastOrNull()?.id)
+                } else {
+                    servicesRepository.getClosedServices(serviceList.lastOrNull()?.id)
+                }
+                servicesFlow
                     .handleError { e ->
                         _state.value =
                             _state.value.copy(listState = ListState.ERROR, error = e.message ?: "")
@@ -108,4 +122,14 @@ enum class ListState {
     PAGINATING,
     ERROR,
     PAGINATION_EXHAUST,
+}
+
+class ServicesViewModelFactory(private val serviceStatus: String) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ServicesViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ServicesViewModel(serviceStatus) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
 }

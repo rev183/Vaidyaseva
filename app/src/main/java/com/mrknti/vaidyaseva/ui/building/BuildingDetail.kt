@@ -1,6 +1,7 @@
 package com.mrknti.vaidyaseva.ui.building
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +27,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,7 +53,6 @@ fun BuildingDetail() {
     val localContext = LocalContext.current
     var showRoomSheet: HostelRoom? by remember { mutableStateOf(null) }
     val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier
@@ -67,9 +67,11 @@ fun BuildingDetail() {
                 }
             } else if (viewState.buildingData != null) {
                 BuildingDetailHeader(viewState.buildingData!!)
+                Spacer(modifier = Modifier.size(12.dp))
+                Divider()
                 Spacer(modifier = Modifier.size(16.dp))
                 BuildingDetailContent(
-                    rooms = viewState.buildingData?.rooms ?: emptyList(),
+                    rooms = viewState.rooms,
                     onRoomClick = {
                         showRoomSheet = it
                     })
@@ -82,7 +84,29 @@ fun BuildingDetail() {
                 )
             }
         }
-    }
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .align(Alignment.BottomStart)) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                COLOR_LEGEND.forEach { (color, text) ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(16.dp)
+                                .background(color, shape = MaterialTheme.shapes.small)
+                        )
+                        Spacer(modifier = Modifier.size(4.dp))
+                        Text(text = text, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+        }
+     }
 }
 
 @Composable
@@ -97,9 +121,9 @@ fun BuildingDetailHeader(buildingData: BuildingData) {
             Text(text = buildingData.name ?: "Building", style = MaterialTheme.typography.titleSmall)
         }
         Spacer(modifier = Modifier.size(8.dp))
-        val hasManager = buildingData.managerName != null
-        val managerText =
-            if (hasManager) "Managed by ${buildingData.managerName}" else "No manager assigned"
+        val hasManager = buildingData.manager != null
+        val managerText = if (hasManager) "Managed by ${buildingData.manager!!.displayName}"
+        else "No manager assigned"
         Text(text = managerText)
         Spacer(modifier = Modifier.size(8.dp))
         Text(text = "Occupied rooms: ${buildingData.numOccupiedRooms}")
@@ -181,8 +205,15 @@ fun getRoomColor(room: HostelRoom): Color {
             if (room.occupancies.isEmpty()) {
                 Color.Green
             } else {
-                Color.Yellow
+                Color.Blue
             }
         }
     }
 }
+
+val COLOR_LEGEND = mapOf(
+    Color.Green to "Vacant",
+    Color.Blue to "Has future bookings",
+    Color.Red to "Checkout after 24 hours",
+    Color.Red.copy(alpha = 0.5f) to "Checkout with in 24 hours"
+)

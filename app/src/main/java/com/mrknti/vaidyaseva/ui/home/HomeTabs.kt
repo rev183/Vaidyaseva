@@ -30,7 +30,6 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,7 +59,7 @@ import com.mrknti.vaidyaseva.ui.Inbox
 import com.mrknti.vaidyaseva.ui.NavGraph
 import com.mrknti.vaidyaseva.ui.Screen
 import com.mrknti.vaidyaseva.ui.components.LoadingView
-import com.mrknti.vaidyaseva.ui.services.Services
+import com.mrknti.vaidyaseva.ui.services.ServicesTabs
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,12 +90,7 @@ fun HomeAppBar(modifier: Modifier, onHamburgerClick: () -> Unit) {
                     modifier = Modifier.padding(start = 12.dp)
                 )
             }
-        } ,
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            titleContentColor = MaterialTheme.colorScheme.onPrimary,
-            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-        ),
+        }
     )
 }
 
@@ -149,10 +143,7 @@ fun HomeNavHost(
             )
         }
         composable(Screen.Services.route) {
-            Services(
-                modifier,
-                onServiceClick = navigateToServiceDetail
-            )
+            ServicesTabs(modifier, onServiceClick = navigateToServiceDetail)
         }
         composable(Screen.Inbox.route) {
             Inbox(modifier, onChatClick = navigateToChatDetail)
@@ -212,7 +203,7 @@ fun HomeBottomTabs(navController: NavHostController) {
                     },
                     bottomBar = {
                         BottomAppBar(
-                            containerColor = MaterialTheme.colorScheme.primary
+//                            containerColor = MaterialTheme.colorScheme.primary
                         ) {
                             val backStackEntry = tabNavController.currentBackStackEntryAsState()
                             bottomNavItems.forEach {
