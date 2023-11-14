@@ -76,13 +76,13 @@ fun BuildingDetail() {
                         showRoomSheet = it
                     })
             }
-            if (showRoomSheet != null) {
-                AssignRoom(
-                    room = showRoomSheet!!,
-                    onDismissRequest = { showRoomSheet = null },
-                    sheetState = sheetState
-                )
-            }
+        }
+        if (showRoomSheet != null) {
+            AssignRoom(
+                room = showRoomSheet!!,
+                onDismissRequest = { showRoomSheet = null },
+                sheetState = sheetState
+            )
         }
         Box(modifier = Modifier
             .fillMaxWidth()

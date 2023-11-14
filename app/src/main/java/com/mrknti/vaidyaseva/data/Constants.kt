@@ -20,6 +20,39 @@ object UserRoles {
     )
 }
 
+enum class UserRoleUI(val value: String) {
+    CLIENT("CLIENT"),
+    ADMIN("ADMIN"),
+    TRANSPORT("TRANSPORT"),
+    HOUSEKEEPING("HOUSEKEEPING"),
+    MANAGER("MANAGER"),
+    SUPER_USER("SUPER_USER");
+
+    val uiString: String
+        get() = when (this) {
+            CLIENT -> "Client"
+            ADMIN -> "Admin"
+            TRANSPORT -> "Transport"
+            HOUSEKEEPING -> "Housekeeping"
+            MANAGER -> "Manager"
+            SUPER_USER -> "Super User"
+        }
+
+    companion object {
+        fun getByValue(value: String): UserRoleUI {
+            return when (value) {
+                "CLIENT" -> CLIENT
+                "ADMIN" -> ADMIN
+                "TRANSPORT" -> TRANSPORT
+                "HOUSEKEEPING" -> HOUSEKEEPING
+                "MANAGER" -> MANAGER
+                "SUPER_USER" -> SUPER_USER
+                else -> CLIENT
+            }
+        }
+    }
+}
+
 object ServiceType {
     const val CAB = "CAB"
     const val CLEANING = "CLEANING"
@@ -61,15 +94,20 @@ enum class ServiceTypeUI(val value: String) {
 }
 
 enum class OccupancyStatus(val value: Int) {
-    BOOKED(1),
-    CHECK_IN(2);
+    BOOKED(0),
+    CHECK_IN(1),
+    CHECK_OUT(2),
+    CANCELLED(3),
+    UNKNOWN(-1);
 
     companion object {
-        fun getByValue(value: Int): OccupancyStatus? {
+        fun getByValue(value: Int): OccupancyStatus {
             return when (value) {
-                1 -> BOOKED
-                2 -> CHECK_IN
-                else -> null
+                0 -> BOOKED
+                1 -> CHECK_IN
+                2 -> CHECK_OUT
+                3 -> CANCELLED
+                else -> UNKNOWN
             }
         }
     }

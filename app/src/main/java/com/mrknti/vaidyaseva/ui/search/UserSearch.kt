@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mrknti.vaidyaseva.R
+import com.mrknti.vaidyaseva.data.UserRoleUI
 import com.mrknti.vaidyaseva.data.user.User
 
 @Composable
@@ -138,8 +139,11 @@ fun SearchUserList(users: List<User>, onUserClick: (User) -> Unit) {
                     .padding(start = 12.dp, end = 12.dp, bottom = 8.dp, top = 8.dp)
             ) {
                 Text(text = user.displayName, modifier = Modifier.padding(8.dp))
+                val rolesString = user.roles?.joinToString(", ") {
+                    UserRoleUI.getByValue(it).uiString
+                }
                 Text(
-                    text = "Roles: ${user.roles?.joinToString(", ")}",
+                    text = "Roles: $rolesString",
                     modifier = Modifier.padding(start = 8.dp, bottom = 8.dp, end = 8.dp)
                 )
             }
@@ -223,19 +227,19 @@ fun SelectedUserDetails(
                             .heightIn(max = 200.dp)
                     )
                 }
-                if (visaImageModel == null || passportImageModel == null) {
-                    TextButton(
-                        onClick = onUploadClick,
-                        modifier = Modifier.align(androidx.compose.ui.Alignment.CenterHorizontally)
-                    ) {
-                        Text(text = "Upload Documents")
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Icon(
-                            painter = painterResource(id = R.drawable.upload_24),
-                            contentDescription = "upload button",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                val hasDocs = passportImageModel != null && visaImageModel != null
+                val docText = if (hasDocs) "Edit Documents" else "Upload Documents"
+                TextButton(
+                    onClick = onUploadClick,
+                    modifier = Modifier.align(androidx.compose.ui.Alignment.CenterHorizontally)
+                ) {
+                    Text(text = docText)
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Icon(
+                        painter = painterResource(id = R.drawable.upload_24),
+                        contentDescription = "upload button",
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
         }

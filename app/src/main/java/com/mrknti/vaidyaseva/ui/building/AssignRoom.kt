@@ -2,13 +2,14 @@ package com.mrknti.vaidyaseva.ui.building
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -45,6 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrknti.vaidyaseva.R
 import com.mrknti.vaidyaseva.data.OccupancyStatus
 import com.mrknti.vaidyaseva.data.building.HostelRoom
+import com.mrknti.vaidyaseva.data.building.RoomOccupancy
 import com.mrknti.vaidyaseva.ui.search.UserSearchBar
 import com.mrknti.vaidyaseva.ui.search.UserSearchViewAction
 import com.mrknti.vaidyaseva.ui.search.UserSearchViewModel
@@ -57,6 +59,7 @@ import java.util.Date
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: SheetState) {
+    var roomState by remember { mutableStateOf(room) }
     var checkIn: Date? by remember { mutableStateOf(null) }
     var checkOut: Date? by remember { mutableStateOf(null) }
     val searchViewModel: UserSearchViewModel = viewModel()
@@ -69,7 +72,14 @@ fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: Sheet
         if (viewActions == UserSearchViewAction.RoomBooked) {
             Toast.makeText(context, "Room booked successfully", Toast.LENGTH_LONG)
                 .show()
+            searchViewModel.clearData()
             onDismissRequest()
+        } else if (viewActions is UserSearchViewAction.OccupancyCheckedOut) {
+            Toast.makeText(context, "Checked out successful", Toast.LENGTH_LONG)
+                .show()
+            val occupancies = roomState.occupancies.toMutableList()
+                .filter { it.id != (viewActions as UserSearchViewAction.OccupancyCheckedOut).occupancyId  }
+            roomState = roomState.copy(occupancies = occupancies)
         }
     }
 
@@ -81,34 +91,41 @@ fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: Sheet
 
     ModalBottomSheet(
         onDismissRequest = {
+            searchViewModel.clearData()
             onDismissRequest()
         },
         sheetState = sheetState,
-        windowInsets = WindowInsets.ime
     ) {
         Column(
             modifier = Modifier
                 .padding(start = 20.dp, end = 20.dp, bottom = 45.dp)
         ) {
             Text(
-                text = "Room - ${room.name}",
+                text = "Room - ${roomState.name}",
                 modifier = Modifier
                     .fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleLarge
             )
             Spacer(modifier = Modifier.size(8.dp))
-            val latestOccupancy = room.occupancies.firstOrNull()
-            val status = OccupancyStatus.getByValue(latestOccupancy?.status ?: -1)
+            val latestOccupancy = roomState.occupancies.firstOrNull()
             val occupancyText = if (latestOccupancy == null) {
                 "Current occupancy - Vacant"
             } else {
-                "Current occupancy - ${latestOccupancy.occupant?.displayName}"
+                "Current occupancy"
             }
             Text(text = occupancyText, style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.size(12.dp))
+            Column {
+                for (occupancy in roomState.occupancies) {
+                    UserOccupancy(occupancy) {
+                        searchViewModel.checkOutOccupancy(it, roomState.id)
+                    }
+                }
+            }
             Spacer(modifier = Modifier.size(16.dp))
             Divider()
-            if (latestOccupancy == null || room.occupancies.size < 2) {
+            if (latestOccupancy == null || roomState.occupancies.size < 2) {
                 if (searchViewState.selectedUser == null) {
                     UserSearchBar(
                         searchQuery,
@@ -119,7 +136,6 @@ fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: Sheet
                         modifier = Modifier.fillMaxWidth(),
                         windowInsets = WindowInsets(top = 8.dp)
                     )
-
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -148,7 +164,7 @@ fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: Sheet
                     onClick = {
                         if (checkIn != null && checkOut != null) {
                             searchViewModel.bookRoom(
-                                room,
+                                roomState,
                                 checkIn!!,
                                 checkOut!!
                             )
@@ -162,7 +178,6 @@ fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: Sheet
                 }
             } else {
                 Spacer(modifier = Modifier.size(4.dp))
-
                 val timingText = if (latestOccupancy.checkoutTime != null) "Check-out time - ${
                     latestOccupancy.checkoutTime.formatDate(DateFormat.DAY_MONTH)
                 }"
@@ -256,6 +271,54 @@ fun BookingTime(onDateChange: (Date, BookingDateType) -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
             )
+        }
+    }
+}
+
+@Composable
+fun UserOccupancy(occupancy: RoomOccupancy, onCheckOutClick: (Int) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp, bottom = 6.dp)
+            .background(
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+                shape = MaterialTheme.shapes.medium
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(top = 8.dp, start = 12.dp, end = 12.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = occupancy.occupant?.displayName ?: "Unknown",
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            Spacer(modifier = Modifier.size(4.dp))
+            Row {
+                Text(
+                    text = "Check-in - ${occupancy.checkInTime?.formatDate(DateFormat.DAY_MONTH)}",
+                    style = MaterialTheme.typography.labelSmall
+                        .copy(color = MaterialTheme.colorScheme.onTertiaryContainer)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "Check-out - ${occupancy.checkoutTime?.formatDate(DateFormat.DAY_MONTH)}",
+                    style = MaterialTheme.typography.labelSmall
+                        .copy(color = MaterialTheme.colorScheme.onTertiaryContainer)
+                )
+            }
+            val status = OccupancyStatus.getByValue(occupancy.status)
+            TextButton(
+                onClick = { onCheckOutClick(occupancy.id) },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text(
+                    text = if (status == OccupancyStatus.CHECK_IN) "Check-out" else "Cancel",
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }

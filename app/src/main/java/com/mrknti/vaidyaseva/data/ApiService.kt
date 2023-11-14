@@ -10,6 +10,7 @@ import com.mrknti.vaidyaseva.data.user.UserDocument
 import com.mrknti.vaidyaseva.data.userService.Service
 import kotlinx.coroutines.flow.Flow
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
@@ -85,11 +86,12 @@ interface ApiService {
         @Field("registrationToken") token: String
     ): Flow<Unit>
 
-    @POST("upload")
     @Multipart
+    @POST("upload")
     fun uploadDocument(
         @Part("userId") clientId: Int,
         @Part("documentType") documentType: Int,
+        @Part("expiryTime") expiryTime: RequestBody,
         @Part data: MultipartBody.Part
     ): Flow<Unit>
 
@@ -114,6 +116,12 @@ interface ApiService {
         @Field("checkInTime") checkIn: String,
         @Field("checkOutTime") checkOut: String
     ): Flow<RoomOccupancy>
+
+    @POST("book/checkout")
+    @FormUrlEncoded
+    fun checkOutOccupancy(
+        @Field("occupancyId") occupancyId: Int
+    ): Flow<Unit>
 
     @GET("get-all")
     fun getAllDocuments(

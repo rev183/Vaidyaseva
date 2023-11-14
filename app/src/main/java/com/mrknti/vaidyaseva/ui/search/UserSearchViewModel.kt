@@ -9,6 +9,7 @@ import com.mrknti.vaidyaseva.data.building.HostelRoom
 import com.mrknti.vaidyaseva.data.eventBus.DocumentUploadEvent
 import com.mrknti.vaidyaseva.data.eventBus.EventBus
 import com.mrknti.vaidyaseva.data.eventBus.RoomBookedEvent
+import com.mrknti.vaidyaseva.data.eventBus.RoomCheckedOutEvent
 import com.mrknti.vaidyaseva.data.getDocumentUrl
 import com.mrknti.vaidyaseva.data.network.handleError
 import com.mrknti.vaidyaseva.data.user.User
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -44,7 +44,6 @@ class UserSearchViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             searchQuery
-                .distinctUntilChanged()
                 .filter { it.length > 2 }
                 .debounce(300)
                 .flatMapLatest { userRepository.searchUser(it) }
@@ -69,6 +68,13 @@ class UserSearchViewModel : ViewModel() {
 
     fun setSelectedUser(user: User) {
         if (user != _state.value.selectedUser) {
+            _state.value = _state.value.copy(
+                selectedUser = user,
+                passportUri = null,
+                visaUri = null,
+                passportUrl = null,
+                visaUrl = null
+            )
             viewModelScope.launch {
                 userRepository.getAllDocuments(user.id)
                     .handleError { _state.value = _state.value.copy(errorMessage = it.message ?: "") }
@@ -82,7 +88,6 @@ class UserSearchViewModel : ViewModel() {
                     }
             }
         }
-        _state.value = _state.value.copy(selectedUser = user)
     }
 
     fun onSearchQueryChange(query: String) {
@@ -114,6 +119,25 @@ class UserSearchViewModel : ViewModel() {
         }
     }
 
+    fun checkOutOccupancy(occupancyId: Int, roomId: Int) {
+        viewModelScope.launch {
+            buildingRepository.checkOutOccupancy(occupancyId)
+                .handleError { _state.value = _state.value.copy(errorMessage = it.message ?: "") }
+                .collect {
+                    _action.emit(UserSearchViewAction.OccupancyCheckedOut(occupancyId))
+                    EventBus.publish(RoomCheckedOutEvent(occupancyId, roomId))
+                }
+        }
+    }
+
+    fun clearData() {
+        _state.value = UserSearchViewState()
+        _action.value = null
+        viewModelScope.launch {
+            (searchQuery as MutableSharedFlow).emit("")
+        }
+    }
+
 }
 
 data class UserSearchViewState(
@@ -128,4 +152,5 @@ data class UserSearchViewState(
 
 sealed class UserSearchViewAction {
     data object RoomBooked : UserSearchViewAction()
+    data class OccupancyCheckedOut(val occupancyId: Int) : UserSearchViewAction()
 }

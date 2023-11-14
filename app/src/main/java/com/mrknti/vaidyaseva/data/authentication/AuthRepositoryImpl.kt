@@ -1,9 +1,7 @@
 package com.mrknti.vaidyaseva.data.authentication
 
 import com.mrknti.vaidyaseva.data.ApiService
-import com.mrknti.vaidyaseva.data.extensions.createMultiPartData
 import com.mrknti.vaidyaseva.data.user.User
-import com.mrknti.vaidyaseva.filehandling.MediaData
 import kotlinx.coroutines.flow.Flow
 
 class AuthRepositoryImpl(private val apiService: ApiService) : AuthRepository {
@@ -22,13 +20,5 @@ class AuthRepositoryImpl(private val apiService: ApiService) : AuthRepository {
 
     override suspend fun registerFCMToken(token: String): Flow<Unit> =
         apiService.registerFCMToken(token)
-
-    override suspend fun uploadDocument(
-        clientId: Int,
-        documentType: Int,
-        document: MediaData
-    ): Flow<Unit> {
-        return apiService.uploadDocument(clientId, documentType, document.createMultiPartData("data"))
-    }
 
 }

@@ -8,6 +8,7 @@ import com.mrknti.vaidyaseva.data.building.BuildingData
 import com.mrknti.vaidyaseva.data.building.HostelRoom
 import com.mrknti.vaidyaseva.data.eventBus.EventBus
 import com.mrknti.vaidyaseva.data.eventBus.RoomBookedEvent
+import com.mrknti.vaidyaseva.data.eventBus.RoomCheckedOutEvent
 import com.mrknti.vaidyaseva.data.network.handleError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +27,10 @@ class BuildingDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
             EventBus.subscribe<RoomBookedEvent> {
                 getBuildingData()
             }
+
+            EventBus.subscribe<RoomCheckedOutEvent> {
+                handleCheckout(it.occupancyId, it.roomId)
+            }
         }
     }
 
@@ -43,6 +48,21 @@ class BuildingDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
                         rooms = it.rooms ?: emptyList()
                     )
                 }
+        }
+    }
+
+    private fun handleCheckout(occupancyId: Int, roomId: Int) {
+        val rooms = state.value.rooms.toMutableList()
+        val roomIndex = rooms.indexOfFirst { it.id == roomId }
+        if (roomIndex != -1) {
+            val room = rooms[roomIndex]
+            val occupancies = room.occupancies.toMutableList()
+            val occupancyIndex = occupancies.indexOfFirst { it.id == occupancyId }
+            if (occupancyIndex != -1) {
+                occupancies.removeAt(occupancyIndex)
+                rooms[roomIndex] = room.copy(occupancies = occupancies)
+                _state.value = _state.value.copy(rooms = rooms)
+            }
         }
     }
 

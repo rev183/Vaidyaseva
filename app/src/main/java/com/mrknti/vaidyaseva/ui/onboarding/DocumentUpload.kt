@@ -1,6 +1,7 @@
 package com.mrknti.vaidyaseva.ui.onboarding
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -44,10 +46,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.mrknti.vaidyaseva.R
 import com.mrknti.vaidyaseva.data.UserDocumentType
 import com.mrknti.vaidyaseva.filehandling.getCameraOutputUri
 import com.mrknti.vaidyaseva.filehandling.getMediaData
+import com.mrknti.vaidyaseva.ui.components.DatePickerDialog
+import com.mrknti.vaidyaseva.ui.components.ProgressIndicatorMedium
+import com.mrknti.vaidyaseva.util.DateFormat
+import com.mrknti.vaidyaseva.util.formatDate
+import java.util.Date
 
 @Composable
 fun DocumentUpload(onFinishClick: () -> Unit) {
@@ -71,6 +79,9 @@ fun DocumentUpload(onFinishClick: () -> Unit) {
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = {
+            if (!it) {
+                return@rememberLauncherForActivityResult
+            }
             if (fileSelectedFor == UserDocumentType.PASSPORT) {
                 viewModel.setImageUri(cameraOutputUri, UserDocumentType.PASSPORT)
             } else {
@@ -141,33 +152,41 @@ fun DocumentUpload(onFinishClick: () -> Unit) {
             UploadDocument(
                 docType = UserDocumentType.PASSPORT,
                 imageUri = viewState.passportUri,
-                isDocumentUploaded = viewState.isPassportUploaded,
+                imageUrl = viewState.passportUrl,
+                expiry = viewState.passportExpiry,
+                token = viewModel.authToken,
+                uploadStatus = viewState.passportStatus,
                 modifier = Modifier.fillMaxWidth(),
                 onSelectDocumentClick = { type ->
                     openAlertDialog = type
                 },
-                onUploadClick = {
+                onUploadClick = { type, expiry ->
                     val mediaData = viewState.passportUri?.getMediaData(localContext)
                     if (mediaData != null) {
-                        viewModel.uploadDocument(it, mediaData)
+                        viewModel.uploadDocument(type, expiry, mediaData)
                     }
-                }
+                },
+                onClearDocument = viewModel::clearDocument
             )
             Spacer(modifier = Modifier.height(16.dp))
             UploadDocument(
                 docType = UserDocumentType.VISA,
                 imageUri = viewState.visaUri,
-                isDocumentUploaded = viewState.isVisaUploaded,
+                imageUrl = viewState.visaUrl,
+                expiry = viewState.visaExpiry,
+                token = viewModel.authToken,
+                uploadStatus = viewState.visaStatus,
                 modifier = Modifier.fillMaxWidth(),
                 onSelectDocumentClick = { type ->
                     openAlertDialog = type
                 },
-                onUploadClick = {
+                onUploadClick = { type, expiry ->
                     val mediaData = viewState.visaUri?.getMediaData(localContext)
                     if (mediaData != null) {
-                        viewModel.uploadDocument(it, mediaData)
+                        viewModel.uploadDocument(type, expiry, mediaData)
                     }
-                }
+                },
+                onClearDocument = viewModel::clearDocument
             )
             Spacer(modifier = Modifier.height(16.dp))
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -184,11 +203,34 @@ fun DocumentUpload(onFinishClick: () -> Unit) {
 fun UploadDocument(
     docType: Int,
     imageUri: Uri?,
+    imageUrl: String?,
+    expiry: Date?,
+    token: String,
     modifier: Modifier = Modifier,
-    isDocumentUploaded: Boolean,
+    uploadStatus: UploadStatus,
     onSelectDocumentClick: (Int) -> Unit,
-    onUploadClick: (Int) -> Unit
+    onUploadClick: (Int, Date) -> Unit,
+    onClearDocument: (Int) -> Unit
 ) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    var expireDate by remember { mutableStateOf(expiry) }
+    val context = LocalContext.current
+    val imageModel by remember(imageUri, imageUrl) { derivedStateOf {
+        if (imageUrl != null) {
+            ImageRequest.Builder(context)
+                .data(imageUrl)
+                .addHeader("token", token)
+                .build()
+        } else imageUri
+    } }
+
+    if (showDatePicker) {
+        DatePickerDialog(onDismiss = { showDatePicker = false }, onDateSelected = {
+            showDatePicker = false
+            expireDate = it
+        })
+    }
+
     Column(modifier = modifier.fillMaxWidth()) {
         IconButton(onClick = { onSelectDocumentClick(docType) }, modifier = Modifier.fillMaxWidth()) {
             Row {
@@ -200,16 +242,35 @@ fun UploadDocument(
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        if (imageUri != null) {
-            AsyncImage(
-                model = imageUri,
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 200.dp)
-            )
+        if (imageModel != null) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                AsyncImage(
+                    model = imageModel,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 200.dp)
+                )
+                TextButton(onClick = { onClearDocument(docType) }, modifier = Modifier.align(Alignment.TopEnd)) {
+                    Text(text = "Remove", style = MaterialTheme.typography.bodyMedium.copy(color = Color.Red))
+                }
+            }
+            val expiryText = if (expireDate != null) {
+                "Expiry: ${expireDate!!.formatDate(DateFormat.DAY_MONTH_YEAR)}"
+            } else {
+                "Expiry: Not Set"
+            }
+            TextButton(onClick = { showDatePicker = true }) {
+                Text(text = expiryText)
+            }
             Row(modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = { onUploadClick(docType) }) {
+                TextButton(onClick = {
+                    if (expireDate != null) {
+                        onUploadClick(docType, expireDate!!)
+                    } else {
+                        Toast.makeText(context, "Please select expiry date", Toast.LENGTH_SHORT).show()
+                    }
+                }) {
                     Row {
                         Icon(
                             painter = painterResource(id = R.drawable.upload_24),
@@ -221,13 +282,19 @@ fun UploadDocument(
                         )
                     }
                 }
-                if (isDocumentUploaded) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    Icon(
-                        painter = painterResource(id = R.drawable.check_circle_24),
-                        contentDescription = "Check done",
-                        tint = Color.Green
-                    )
+                Spacer(modifier = Modifier.weight(1f))
+                when(uploadStatus) {
+                    UploadStatus.UPLOADING -> {
+                        ProgressIndicatorMedium()
+                    }
+                    UploadStatus.UPLOADED -> {
+                        Icon(
+                            painter = painterResource(id = R.drawable.check_circle_24),
+                            contentDescription = "Check done",
+                            tint = Color.Green
+                        )
+                    }
+                    else -> {}
                 }
             }
         }

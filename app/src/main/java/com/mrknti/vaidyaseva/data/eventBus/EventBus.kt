@@ -47,3 +47,4 @@ data class DocumentUploadEvent(val userId:Int, val documentType: Int, val docume
 
 // building events
 data class RoomBookedEvent(val occupancy: RoomOccupancy)
+data class RoomCheckedOutEvent(val occupancyId: Int, val roomId: Int)
