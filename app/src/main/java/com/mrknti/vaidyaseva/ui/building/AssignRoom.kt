@@ -17,12 +17,13 @@ import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,6 +48,7 @@ import com.mrknti.vaidyaseva.R
 import com.mrknti.vaidyaseva.data.OccupancyStatus
 import com.mrknti.vaidyaseva.data.building.HostelRoom
 import com.mrknti.vaidyaseva.data.building.RoomOccupancy
+import com.mrknti.vaidyaseva.ui.components.ButtonSmall
 import com.mrknti.vaidyaseva.ui.search.UserSearchBar
 import com.mrknti.vaidyaseva.ui.search.UserSearchViewAction
 import com.mrknti.vaidyaseva.ui.search.UserSearchViewModel
@@ -124,7 +126,7 @@ fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: Sheet
                 }
             }
             Spacer(modifier = Modifier.size(16.dp))
-            Divider()
+            HorizontalDivider()
             if (latestOccupancy == null || roomState.occupancies.size < 2) {
                 if (searchViewState.selectedUser == null) {
                     UserSearchBar(
@@ -192,7 +194,9 @@ fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: Sheet
 @Composable
 fun BookingTime(onDateChange: (Date, BookingDateType) -> Unit) {
     var showDatePicker by remember { mutableStateOf(BookingDateType.NONE) }
-    val datePickerState = rememberDatePickerState()
+    val datePickerState = rememberDatePickerState(selectableDates = object : SelectableDates {
+        override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis >= TODAY_START
+    })
     val calendar = Calendar.getInstance()
     var checkInText by remember { mutableStateOf("Check In") }
     var checkOutText by remember { mutableStateOf("Check Out") }
@@ -232,7 +236,7 @@ fun BookingTime(onDateChange: (Date, BookingDateType) -> Unit) {
                 }
             }
         ) {
-            DatePicker(state = datePickerState, dateValidator = { it >= TODAY_START })
+            DatePicker(state = datePickerState)
         }
     }
 
@@ -241,34 +245,34 @@ fun BookingTime(onDateChange: (Date, BookingDateType) -> Unit) {
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Button(onClick = { showDatePicker = BookingDateType.CHECK_IN }) {
+        ButtonSmall(onClick = { showDatePicker = BookingDateType.CHECK_IN }) {
             Image(
                 imageVector = Icons.Rounded.DateRange,
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(20.dp),
                 colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
             )
             Spacer(modifier = Modifier.size(4.dp))
             Text(
                 text = checkInText,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
             )
         }
-        Spacer(modifier = Modifier.size(4.dp))
+        Spacer(modifier = Modifier.size(12.dp))
         Text(text = "to", style = MaterialTheme.typography.bodyLarge)
-        Spacer(modifier = Modifier.size(4.dp))
-        Button(onClick = { showDatePicker = BookingDateType.CHECK_OUT }) {
+        Spacer(modifier = Modifier.size(12.dp))
+        ButtonSmall(onClick = { showDatePicker = BookingDateType.CHECK_OUT }) {
             Image(
                 imageVector = Icons.Rounded.DateRange,
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(20.dp),
                 colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
             )
             Spacer(modifier = Modifier.size(4.dp))
             Text(
                 text = checkOutText,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
             )
         }

@@ -1,12 +1,15 @@
 package com.mrknti.vaidyaseva.data
 
 import com.mrknti.vaidyaseva.data.authentication.AuthData
+import com.mrknti.vaidyaseva.data.authentication.RegisterDevice
 import com.mrknti.vaidyaseva.data.building.BuildingData
 import com.mrknti.vaidyaseva.data.building.RoomOccupancy
 import com.mrknti.vaidyaseva.data.chat.ChatMessage
 import com.mrknti.vaidyaseva.data.chat.ChatThread
+import com.mrknti.vaidyaseva.data.user.InboxItem
 import com.mrknti.vaidyaseva.data.user.User
 import com.mrknti.vaidyaseva.data.user.UserDocument
+import com.mrknti.vaidyaseva.data.user.UserInfo
 import com.mrknti.vaidyaseva.data.userService.Service
 import kotlinx.coroutines.flow.Flow
 import okhttp3.MultipartBody
@@ -50,6 +53,9 @@ interface ApiService {
         @Field("requestType") serviceType: String,
         @Field("serviceTime") serviceTime: String,
         @Field("comment") comment: String?,
+        @Field("bookForUserId") requesterId: Int?,
+        @Field("source") source: Int?,
+        @Field("destination") destination: Int?,
     ): Flow<Service>
 
     @POST("ack")
@@ -83,8 +89,9 @@ interface ApiService {
     @POST("register-fcm")
     @FormUrlEncoded
     fun registerFCMToken(
-        @Field("registrationToken") token: String
-    ): Flow<Unit>
+        @Field("registrationToken") token: String,
+        @Field("deviceId") deviceId: Int?
+    ): Flow<RegisterDevice>
 
     @Multipart
     @POST("upload")
@@ -127,5 +134,15 @@ interface ApiService {
     fun getAllDocuments(
         @Query("userId") userId: Int
     ): Flow<List<UserDocument>>
+
+    @GET("/inbox")
+    fun getInbox(): Flow<List<InboxItem>>
+
+    @GET("/user-info")
+    fun getUserInfo(@Query("userId") userId: Int?): Flow<UserInfo>
+
+    @POST("/logout")
+    @FormUrlEncoded
+    fun logout(@Query("deviceId") deviceId: Int?): Flow<Unit>
 
 }
