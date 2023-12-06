@@ -1,7 +1,11 @@
 package com.mrknti.vaidyaseva.ui.auth
 
+import android.app.Activity
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,8 +20,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,6 +35,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrknti.vaidyaseva.ui.components.LoadingView
@@ -38,7 +46,16 @@ fun LoginPage(onLogin: () -> Unit) {
     val viewModel: AuthViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val actions = viewModel.actions.collectAsStateWithLifecycle()
+    val isLoginDone by viewModel.isLoginDone.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    BackPressHandler {
+        if (isLoginDone) {
+            onLogin()
+        } else {
+            finishAffinity(context as Activity)
+        }
+    }
 
     if (actions.value == AuthActions.Login) {
         onLogin()
@@ -97,5 +114,30 @@ fun LoginPage(onLogin: () -> Unit) {
                 fontFamily = FontFamily.Default
             )
         )
+    }
+}
+
+@Composable
+fun BackPressHandler(
+    backPressedDispatcher: OnBackPressedDispatcher? =
+        LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher,
+    onBackPressed: () -> Unit
+) {
+    val currentOnBackPressed by rememberUpdatedState(newValue = onBackPressed)
+
+    val backCallback = remember {
+        object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                currentOnBackPressed()
+            }
+        }
+    }
+
+    DisposableEffect(key1 = backPressedDispatcher) {
+        backPressedDispatcher?.addCallback(backCallback)
+
+        onDispose {
+            backCallback.remove()
+        }
     }
 }

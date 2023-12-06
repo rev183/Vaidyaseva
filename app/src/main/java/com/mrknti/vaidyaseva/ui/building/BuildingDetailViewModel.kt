@@ -11,12 +11,15 @@ import com.mrknti.vaidyaseva.data.eventBus.EventBus
 import com.mrknti.vaidyaseva.data.eventBus.RoomBookedEvent
 import com.mrknti.vaidyaseva.data.eventBus.RoomCheckedOutEvent
 import com.mrknti.vaidyaseva.data.network.handleError
+import com.mrknti.vaidyaseva.data.user.User
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class BuildingDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
     private val buildingId = saveState.get<Int>("building_id")!!
     private val _state = MutableStateFlow(BuildingDetailViewState())
@@ -35,6 +38,12 @@ class BuildingDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
         viewModelScope.launch {
             EventBus.subscribe<RoomCheckedOutEvent> {
                 handleCheckout(it.occupancyId, it.roomId)
+            }
+        }
+
+        viewModelScope.launch {
+            Graph.dataStoreManager.getUser().collect {
+                _state.value = _state.value.copy(selfUser = it)
             }
         }
     }
@@ -81,5 +90,6 @@ data class BuildingDetailViewState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val buildingData: BuildingData? = null,
+    val selfUser: User? = null,
     val rooms: List<HostelRoom> = emptyList()
 )

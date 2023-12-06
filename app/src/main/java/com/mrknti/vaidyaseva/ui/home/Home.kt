@@ -44,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrknti.vaidyaseva.data.ServiceType
 import com.mrknti.vaidyaseva.data.building.BuildingData
+import com.mrknti.vaidyaseva.data.user.User
 import com.mrknti.vaidyaseva.ui.building.BuildingDetailHeader
 import kotlin.math.ceil
 
@@ -101,7 +102,7 @@ fun Home(
                 Text(text = "Building info", modifier = Modifier.padding(bottom = 4.dp, top = 8.dp))
             }
             items(viewState.buildings, key = { it.id }) { building ->
-                BuildingCard(buildingData = building, navigateToBuildingDetail = navigateToBuildingDetail)
+                BuildingCard(buildingData = building, viewState.selfUser, navigateToBuildingDetail = navigateToBuildingDetail)
             }
         }
         PullToRefreshContainer(
@@ -159,10 +160,10 @@ fun ServiceRequestItem(
 }
 
 @Composable
-fun BuildingCard(buildingData: BuildingData, navigateToBuildingDetail: (BuildingData) -> Unit) {
+fun BuildingCard(buildingData: BuildingData, selfUser: User?, navigateToBuildingDetail: (BuildingData) -> Unit) {
     Card(onClick = { navigateToBuildingDetail(buildingData) }, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
-            BuildingDetailHeader(buildingData)
+            BuildingDetailHeader(buildingData, selfUser)
         }
     }
 }

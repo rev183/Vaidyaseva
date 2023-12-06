@@ -34,7 +34,7 @@ class MainViewModel : ViewModel() {
     fun performLogout() {
         viewModelScope.launch {
             authRepository.logout(dataStoreManager.getRegisteredDevice().first())
-                .handleError {  }
+                .handleError { _actions.value = null }
                 .collect {
                     dataStoreManager.clearOnLogout()
                     _actions.value = null

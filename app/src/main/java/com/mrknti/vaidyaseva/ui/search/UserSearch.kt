@@ -41,6 +41,9 @@ import coil.request.ImageRequest
 import com.mrknti.vaidyaseva.R
 import com.mrknti.vaidyaseva.data.UserRole
 import com.mrknti.vaidyaseva.data.user.User
+import com.mrknti.vaidyaseva.util.DateFormat
+import com.mrknti.vaidyaseva.util.formatDate
+import java.util.Date
 
 @Composable
 fun UserSearch(onUploadClick: (String) -> Unit, onSearchDone: (User) -> Unit) {
@@ -77,8 +80,10 @@ fun UserSearch(onUploadClick: (String) -> Unit, onSearchDone: (User) -> Unit) {
                     roomName = viewState.selectedUserInfo?.roomName,
                     passportUrl = viewState.passportUrl,
                     passportUri = viewState.passportUri,
+                    passportExpiry = viewState.passportExpiry,
                     visaUrl = viewState.visaUrl,
                     visaUri = viewState.visaUri,
+                    visaExpiry = viewState.visaExpiry,
                     token = viewModel.authToken,
                     onUploadClick = {
                         onUploadClick(viewModel.selectedUserJson)
@@ -167,8 +172,10 @@ fun SelectedUserDetails(
     roomName: String?,
     passportUrl: String?,
     passportUri: Uri?,
+    passportExpiry: Date?,
     visaUrl: String?,
     visaUri: Uri?,
+    visaExpiry: Date?,
     token: String,
     onUploadClick: () -> Unit
 ) {
@@ -224,7 +231,12 @@ fun SelectedUserDetails(
                     Row {
                         Text(text = "Passport", style = MaterialTheme.typography.bodyMedium)
                         Spacer(modifier = Modifier.weight(1f))
-                        Text(text = "Expiry: ", style = MaterialTheme.typography.bodyMedium)
+                        if (passportExpiry != null) {
+                            Text(
+                                text = "Expiry: ${passportExpiry.formatDate(DateFormat.DAY_MONTH_YEAR)}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.size(8.dp))
                     AsyncImage(
@@ -240,7 +252,16 @@ fun SelectedUserDetails(
                 }
                 Spacer(modifier = Modifier.size(16.dp))
                 if (visaImageModel != null) {
-                    Text(text = "Visa")
+                    Row {
+                        Text(text = "Passport", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.weight(1f))
+                        if (visaExpiry != null) {
+                            Text(
+                                text = "Expiry: ${visaExpiry.formatDate(DateFormat.DAY_MONTH_YEAR)}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.size(8.dp))
                     AsyncImage(model = ImageRequest.Builder(LocalContext.current)
                         .data(visaUrl)

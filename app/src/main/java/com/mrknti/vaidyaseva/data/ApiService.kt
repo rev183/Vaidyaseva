@@ -143,6 +143,6 @@ interface ApiService {
 
     @POST("/logout")
     @FormUrlEncoded
-    fun logout(@Query("deviceId") deviceId: Int?): Flow<Unit>
+    fun logout(@Field("deviceId") deviceId: Int?): Flow<Unit>
 
 }

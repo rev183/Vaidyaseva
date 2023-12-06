@@ -43,6 +43,7 @@ import coil.compose.AsyncImage
 import com.mrknti.vaidyaseva.R
 import com.mrknti.vaidyaseva.data.building.BuildingData
 import com.mrknti.vaidyaseva.data.building.HostelRoom
+import com.mrknti.vaidyaseva.data.user.User
 import com.mrknti.vaidyaseva.ui.components.LoadingView
 import com.mrknti.vaidyaseva.util.DateFormat
 import com.mrknti.vaidyaseva.util.differenceInHours
@@ -69,7 +70,7 @@ fun BuildingDetail() {
                     Toast.makeText(localContext, viewState.errorMessage, Toast.LENGTH_SHORT).show()
                 }
             } else if (viewState.buildingData != null) {
-                BuildingDetailHeader(viewState.buildingData!!)
+                BuildingDetailHeader(viewState.buildingData!!, viewState.selfUser)
                 Spacer(modifier = Modifier.size(12.dp))
                 HorizontalDivider()
                 Spacer(modifier = Modifier.size(16.dp))
@@ -117,41 +118,41 @@ fun BuildingDetail() {
 }
 
 @Composable
-fun BuildingDetailHeader(buildingData: BuildingData) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row {
-            Column {
-                Row {
-                    Icon(
-                        painter = painterResource(id = R.drawable.apartment_24),
-                        contentDescription = null
-                    )
-                    Spacer(modifier = Modifier.size(12.dp))
-                    Text(text = buildingData.name ?: "Building", style = MaterialTheme.typography.titleSmall)
-                }
+fun BuildingDetailHeader(buildingData: BuildingData, selfUser: User?) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Column {
+            Row {
+                Icon(
+                    painter = painterResource(id = R.drawable.apartment_24),
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.size(12.dp))
+                Text(text = buildingData.name ?: "Building", style = MaterialTheme.typography.titleSmall)
+            }
+            if (selfUser != null && selfUser.canProxyBook()) {
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(text = "Occupied: ${buildingData.numOccupiedRooms}", style = MaterialTheme.typography.labelMedium)
                 Spacer(modifier = Modifier.size(4.dp))
                 Text(text = "Free: ${buildingData.freeRooms}", style = MaterialTheme.typography.labelMedium)
             }
-            Spacer(modifier = Modifier.weight(1f))
-            if (buildingData.getGalleryUrls().isNotEmpty()) {
-                AsyncImage(
-                    model = buildingData.getGalleryUrls().firstOrNull(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .align(Alignment.CenterVertically),
-                    contentScale = ContentScale.Crop
-                )
-            }
+            Spacer(modifier = Modifier.size(8.dp))
+            val hasManager = buildingData.manager != null
+            val managerText = if (hasManager) "Manager - ${buildingData.manager!!.displayName}"
+            else "No manager assigned"
+            Text(text = managerText, style = MaterialTheme.typography.bodySmall)
         }
-        Spacer(modifier = Modifier.size(8.dp))
-        val hasManager = buildingData.manager != null
-        val managerText = if (hasManager) "Managed by ${buildingData.manager!!.displayName}"
-        else "No manager assigned"
-        Text(text = managerText)
+        Spacer(modifier = Modifier.weight(1f))
+        if (buildingData.getGalleryUrls().isNotEmpty()) {
+            AsyncImage(
+                model = buildingData.getGalleryUrls().firstOrNull(),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .align(Alignment.CenterVertically),
+                contentScale = ContentScale.Crop
+            )
+        }
     }
 }
 

@@ -6,6 +6,7 @@ import com.mrknti.vaidyaseva.Graph
 import com.mrknti.vaidyaseva.data.building.BuildingData
 import com.mrknti.vaidyaseva.data.building.BuildingType
 import com.mrknti.vaidyaseva.data.network.handleError
+import com.mrknti.vaidyaseva.data.user.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -17,7 +18,11 @@ class HomeViewModel : ViewModel() {
     private val dataStore = Graph.dataStoreManager
 
     init {
-        _state.value = _state.value.copy(isLoading = true)
+        viewModelScope.launch {
+            dataStore.getUser().collect { user ->
+                _state.value = _state.value.copy(selfUser = user, isLoading = true)
+            }
+        }
     }
 
     fun getBuildingsData() {
@@ -40,6 +45,7 @@ class HomeViewModel : ViewModel() {
 
 data class HomeViewState(
     val buildings: List<BuildingData> = emptyList(),
+    val selfUser: User? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
 )

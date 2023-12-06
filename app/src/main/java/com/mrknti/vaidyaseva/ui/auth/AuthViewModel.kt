@@ -22,6 +22,7 @@ class AuthViewModel : ViewModel() {
 
     private val dataManager = Graph.dataStoreManager
     private val authRepository = Graph.authRepository
+    val isLoginDone = MutableStateFlow(false)
 
     fun performLogin() {
         _state.value = _state.value.copy(isLoading = true)
@@ -46,10 +47,12 @@ class AuthViewModel : ViewModel() {
                                     dataManager.isFCMRegistrationCompleted = true
                                     dataManager.saveRegisteredDevice(it.deviceId)
                                     _actions.value = AuthActions.Login
+                                    isLoginDone.value = true
                                 }
                         }
                     } else {
                         _actions.value = AuthActions.Login
+                        isLoginDone.value = true
                     }
                 }
                 .stateIn(viewModelScope)
