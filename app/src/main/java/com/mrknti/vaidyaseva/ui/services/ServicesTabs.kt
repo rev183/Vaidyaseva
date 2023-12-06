@@ -65,11 +65,11 @@ fun ServicesTabs(modifier: Modifier = Modifier, onServiceClick: (Service) -> Uni
             when (index) {
                 ServicesTab.Open.ordinal -> Services(
                     onServiceClick = onServiceClick,
-                    serviceType = ServiceStatus.RAISED
+                    serviceStatus = ServiceStatus.RAISED
                 )
                 ServicesTab.Closed.ordinal -> Services(
                     onServiceClick = onServiceClick,
-                    serviceType = ServiceStatus.COMPLETED
+                    serviceStatus = ServiceStatus.COMPLETED
                 )
             }
         }

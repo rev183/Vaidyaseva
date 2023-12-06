@@ -190,7 +190,11 @@ fun DocumentUpload(onFinishClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Button(onClick = { onFinishClick() }) {
+                Button(
+                    onClick = {
+                        onFinishClick()
+                    }
+                ) {
                     Text(text = "Done")
                 }
             }
@@ -213,7 +217,7 @@ fun UploadDocument(
     onClearDocument: (Int) -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    var expireDate by remember { mutableStateOf(expiry) }
+    var expireDate: Date? by remember { mutableStateOf(null) }
     val context = LocalContext.current
     val imageModel by remember(imageUri, imageUrl) { derivedStateOf {
         if (imageUrl != null) {
@@ -255,8 +259,9 @@ fun UploadDocument(
                     Text(text = "Remove", style = MaterialTheme.typography.bodyMedium.copy(color = Color.Red))
                 }
             }
-            val expiryText = if (expireDate != null) {
-                "Expiry: ${expireDate!!.formatDate(DateFormat.DAY_MONTH_YEAR)}"
+            val displayExpiry = expireDate ?: expiry
+            val expiryText = if (displayExpiry != null) {
+                "Expiry: ${displayExpiry.formatDate(DateFormat.DAY_MONTH_YEAR)}"
             } else {
                 "Expiry: Not Set"
             }

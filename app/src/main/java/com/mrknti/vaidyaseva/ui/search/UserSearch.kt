@@ -3,6 +3,7 @@ package com.mrknti.vaidyaseva.ui.search
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,8 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,11 +39,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mrknti.vaidyaseva.R
-import com.mrknti.vaidyaseva.data.UserRoleUI
+import com.mrknti.vaidyaseva.data.UserRole
 import com.mrknti.vaidyaseva.data.user.User
 
 @Composable
-fun UserSearch(onUploadClick: (String) -> Unit) {
+fun UserSearch(onUploadClick: (String) -> Unit, onSearchDone: (User) -> Unit) {
     val viewModel: UserSearchViewModel = viewModel()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle(initialValue = "")
     val viewState by viewModel.state.collectAsStateWithLifecycle()
@@ -56,7 +57,13 @@ fun UserSearch(onUploadClick: (String) -> Unit) {
                 searchQuery,
                 viewModel::onSearchQueryChange,
                 viewModel::onClearSearch,
-                viewModel::setSelectedUser,
+                onUserClick = {
+                    if (viewModel.searchType == SearchType.GET_USER) {
+                        onSearchDone(it)
+                    } else {
+                        viewModel.setSelectedUser(it)
+                    }
+                },
                 viewState.searchResults,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -66,6 +73,8 @@ fun UserSearch(onUploadClick: (String) -> Unit) {
             if (viewState.selectedUser != null) {
                 SelectedUserDetails(
                     user = viewState.selectedUser!!,
+                    buildingName = viewState.selectedUserInfo?.buildingName,
+                    roomName = viewState.selectedUserInfo?.roomName,
                     passportUrl = viewState.passportUrl,
                     passportUri = viewState.passportUri,
                     visaUrl = viewState.visaUrl,
@@ -127,7 +136,6 @@ fun UserSearchBar(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchUserList(users: List<User>, onUserClick: (User) -> Unit) {
     LazyColumn {
@@ -139,8 +147,8 @@ fun SearchUserList(users: List<User>, onUserClick: (User) -> Unit) {
                     .padding(start = 12.dp, end = 12.dp, bottom = 8.dp, top = 8.dp)
             ) {
                 Text(text = user.displayName, modifier = Modifier.padding(8.dp))
-                val rolesString = user.roles?.joinToString(", ") {
-                    UserRoleUI.getByValue(it).uiString
+                val rolesString = user.roles.joinToString(", ") {
+                    UserRole.getByValue(it).uiString
                 }
                 Text(
                     text = "Roles: $rolesString",
@@ -155,6 +163,8 @@ fun SearchUserList(users: List<User>, onUserClick: (User) -> Unit) {
 fun SelectedUserDetails(
     modifier: Modifier = Modifier,
     user: User,
+    buildingName: String?,
+    roomName: String?,
     passportUrl: String?,
     passportUri: Uri?,
     visaUrl: String?,
@@ -184,11 +194,22 @@ fun SelectedUserDetails(
     Column(modifier = modifier.padding(top = 8.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)) {
         Text(text = user.displayName, style = MaterialTheme.typography.titleSmall)
         Spacer(modifier = Modifier.size(4.dp))
-        Text(text = "Roles: ${user.roles?.joinToString(", ")}")
-        Spacer(modifier = Modifier.size(8.dp))
-        Divider()
+        Text(
+            text = "Roles: ${user.roles.joinToString(", ") { UserRole.getByValue(it).uiString }}",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(modifier = Modifier.size(4.dp))
+        val occupancyText = if (buildingName != null && roomName != null) {
+            "Assigned Room: $buildingName - $roomName"
+        } else {
+            "No room assigned"
+        }
+        Text(text = occupancyText, style = MaterialTheme.typography.bodyMedium)
+        Spacer(modifier = Modifier.size(12.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.size(12.dp))
         TextButton(onClick = { expanded = !expanded }) {
-            Text(text = "Documents", style = MaterialTheme.typography.titleSmall)
+            Text(text = "Documents", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.weight(1f))
             Icon(
                 painter = if (expanded) painterResource(id = R.drawable.expand_less_24)
@@ -200,7 +221,11 @@ fun SelectedUserDetails(
         AnimatedVisibility(visible = expanded) {
             Column(modifier = Modifier.padding(start = 10.dp, end = 10.dp)) {
                 if (passportImageModel != null) {
-                    Text(text = "Passport")
+                    Row {
+                        Text(text = "Passport", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(text = "Expiry: ", style = MaterialTheme.typography.bodyMedium)
+                    }
                     Spacer(modifier = Modifier.size(8.dp))
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
@@ -244,4 +269,8 @@ fun SelectedUserDetails(
             }
         }
     }
+}
+
+enum class SearchType {
+    MAIN, GET_USER
 }

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrknti.vaidyaseva.data.ServiceStatus
+import com.mrknti.vaidyaseva.data.ServiceType
 import com.mrknti.vaidyaseva.ui.chats.ChatDetail
 import com.mrknti.vaidyaseva.util.DateFormat
 import com.mrknti.vaidyaseva.util.formatDate
@@ -33,8 +34,25 @@ fun ServiceDetail() {
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "${service.type} service requested by ${service.requester.displayName}",
+                text = "${ServiceType.getByValue(service.type).uiString} service requested by ${service.requester.displayName}",
                 style = MaterialTheme.typography.titleSmall
+            )
+            if (service.type == ServiceType.TRANSPORT.value) {
+                val transportText = if (viewState.source != null && viewState.destination != null) {
+                    "From ${viewState.source} to ${viewState.destination}"
+                } else {
+                    "Ride details missing."
+                }
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = transportText,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = "Service Needed at ${service.serviceTime?.formatDate(DateFormat.HOUR_DAY_MONTH)}",
+                style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.size(16.dp))
             if (service.status == ServiceStatus.COMPLETED) {

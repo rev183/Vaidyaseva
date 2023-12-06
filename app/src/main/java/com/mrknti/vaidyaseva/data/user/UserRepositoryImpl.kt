@@ -18,7 +18,6 @@ class UserRepositoryImpl(private val apiService: ApiService) : UserRepository {
         expiryTime: Date,
         document: MediaData
     ): Flow<Unit> {
-
         return apiService.uploadDocument(
             clientId,
             documentType,
@@ -26,4 +25,8 @@ class UserRepositoryImpl(private val apiService: ApiService) : UserRepository {
             document.createMultiPartData("data")
         )
     }
+    override suspend fun getInbox(): Flow<List<InboxItem>> = apiService.getInbox()
+
+    override suspend fun getUserInfo(userId: Int?): Flow<UserInfo> = apiService.getUserInfo(userId)
+
 }

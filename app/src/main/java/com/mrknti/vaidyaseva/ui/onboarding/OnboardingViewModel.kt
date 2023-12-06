@@ -3,20 +3,23 @@ package com.mrknti.vaidyaseva.ui.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
-import com.mrknti.vaidyaseva.data.UserRoles
+import com.mrknti.vaidyaseva.data.UserRole
 import com.mrknti.vaidyaseva.data.network.handleError
 import com.mrknti.vaidyaseva.data.user.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-class OnboardingViewModel() : ViewModel() {
+class OnboardingViewModel : ViewModel() {
     private val _state = MutableStateFlow(OnboardingUIState())
     private val authRepository = Graph.authRepository
     private val userJsonAdapter = Graph.moshi.adapter(User::class.java)
 
     private val _actions = MutableStateFlow<OnboardActions?>(null)
     val actions = _actions.asStateFlow()
+    val selfUser = runBlocking { Graph.dataStoreManager.getUser().first()!! }
 
     val state = _state.asStateFlow()
 
@@ -28,7 +31,7 @@ class OnboardingViewModel() : ViewModel() {
                 state.value.lastName,
                 _state.value.username,
                 _state.value.password,
-                _state.value.role
+                _state.value.role.value
             )
             .handleError {
                     _state.value = _state.value.copy(isLoading = false, error = it.message ?: "")
@@ -57,7 +60,7 @@ class OnboardingViewModel() : ViewModel() {
         _state.value = _state.value.copy(lastName = value)
     }
 
-    fun setRole(value: String) {
+    fun setRole(value: UserRole) {
         _state.value = _state.value.copy(role = value)
     }
 }
@@ -67,7 +70,7 @@ data class OnboardingUIState(
     var password: String = "",
     var firstName: String = "",
     var lastName: String = "",
-    var role: String = UserRoles.CLIENT,
+    var role: UserRole = UserRole.CLIENT,
     val isLoading: Boolean = false,
     val error: String = "",
     val userJson: String? = null

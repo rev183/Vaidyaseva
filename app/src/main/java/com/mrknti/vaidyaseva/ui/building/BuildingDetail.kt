@@ -16,8 +16,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,13 +30,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.mrknti.vaidyaseva.R
 import com.mrknti.vaidyaseva.data.building.BuildingData
 import com.mrknti.vaidyaseva.data.building.HostelRoom
@@ -68,13 +71,15 @@ fun BuildingDetail() {
             } else if (viewState.buildingData != null) {
                 BuildingDetailHeader(viewState.buildingData!!)
                 Spacer(modifier = Modifier.size(12.dp))
-                Divider()
+                HorizontalDivider()
                 Spacer(modifier = Modifier.size(16.dp))
-                BuildingDetailContent(
-                    rooms = viewState.rooms,
-                    onRoomClick = {
-                        showRoomSheet = it
-                    })
+                if (viewModel.isAdmin()) {
+                    BuildingDetailContent(
+                        rooms = viewState.rooms,
+                        onRoomClick = {
+                            showRoomSheet = it
+                        })
+                }
             }
         }
         if (showRoomSheet != null) {
@@ -84,24 +89,26 @@ fun BuildingDetail() {
                 sheetState = sheetState
             )
         }
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .align(Alignment.BottomStart)) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                COLOR_LEGEND.forEach { (color, text) ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(16.dp)
-                                .background(color, shape = MaterialTheme.shapes.small)
-                        )
-                        Spacer(modifier = Modifier.size(4.dp))
-                        Text(text = text, style = MaterialTheme.typography.labelSmall)
+        if (viewModel.isAdmin()) {
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomStart)) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    COLOR_LEGEND.forEach { (color, text) ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .background(color, shape = MaterialTheme.shapes.small)
+                            )
+                            Spacer(modifier = Modifier.size(4.dp))
+                            Text(text = text, style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }
@@ -113,22 +120,38 @@ fun BuildingDetail() {
 fun BuildingDetailHeader(buildingData: BuildingData) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row {
-            Icon(
-                painter = painterResource(id = R.drawable.apartment_24),
-                contentDescription = null
-            )
-            Spacer(modifier = Modifier.size(12.dp))
-            Text(text = buildingData.name ?: "Building", style = MaterialTheme.typography.titleSmall)
+            Column {
+                Row {
+                    Icon(
+                        painter = painterResource(id = R.drawable.apartment_24),
+                        contentDescription = null
+                    )
+                    Spacer(modifier = Modifier.size(12.dp))
+                    Text(text = buildingData.name ?: "Building", style = MaterialTheme.typography.titleSmall)
+                }
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(text = "Occupied: ${buildingData.numOccupiedRooms}", style = MaterialTheme.typography.labelMedium)
+                Spacer(modifier = Modifier.size(4.dp))
+                Text(text = "Free: ${buildingData.freeRooms}", style = MaterialTheme.typography.labelMedium)
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            if (buildingData.getGalleryUrls().isNotEmpty()) {
+                AsyncImage(
+                    model = buildingData.getGalleryUrls().firstOrNull(),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(MaterialTheme.shapes.medium)
+                        .align(Alignment.CenterVertically),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
         Spacer(modifier = Modifier.size(8.dp))
         val hasManager = buildingData.manager != null
         val managerText = if (hasManager) "Managed by ${buildingData.manager!!.displayName}"
         else "No manager assigned"
         Text(text = managerText)
-        Spacer(modifier = Modifier.size(8.dp))
-        Text(text = "Occupied rooms: ${buildingData.numOccupiedRooms}")
-        Spacer(modifier = Modifier.size(4.dp))
-        Text(text = "Unoccupied rooms: ${buildingData.freeRooms}")
     }
 }
 
@@ -153,7 +176,6 @@ fun BuildingDetailContent(rooms: List<HostelRoom>, onRoomClick: (HostelRoom) -> 
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoomItem(room: HostelRoom, onRoomClick: (HostelRoom) -> Unit) {
     Card(
@@ -195,7 +217,7 @@ fun RoomItem(room: HostelRoom, onRoomClick: (HostelRoom) -> Unit) {
 fun getRoomColor(room: HostelRoom): Color {
     return when {
         room.isOccupied -> {
-            if ((room.occupancies.first().checkoutTime?.differenceInHours() ?: 0) > 24) {
+            if ((room.occupancies.firstOrNull()?.checkoutTime?.differenceInHours() ?: 0) > 24) {
                 Color.Red
             } else {
                 Color.Red.copy(alpha = 0.5f)

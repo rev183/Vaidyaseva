@@ -15,9 +15,19 @@ class ServiceRepositoryImpl(private val apiService: ApiService) : ServicesReposi
     override suspend fun bookServices(
         serviceType: String,
         serviceTime: Date,
-        comment: String?
+        comment: String?,
+        requesterId: Int?,
+        source: Int?,
+        destination: Int?,
     ): Flow<Service> =
-        apiService.bookService(serviceType, convertToISO8601(serviceTime), comment)
+        apiService.bookService(
+            serviceType,
+            convertToISO8601(serviceTime),
+            comment,
+            requesterId,
+            source,
+            destination
+        )
 
     override suspend fun acknowledgeService(serviceId: Int): Flow<Unit> =
         apiService.acknowledgeService(serviceId)

@@ -107,7 +107,12 @@ object Graph {
     )
 
     fun provide(context: Context) {
-        dataStoreManager = DataStoreManager(context)
+        moshi = Moshi.Builder()
+            .add(KotlinJsonAdapterFactory())
+            .add(Date::class.java, Rfc3339DateJsonAdapter().nullSafe())
+            .build()
+
+        dataStoreManager = DataStoreManager(context, moshi)
 
         okHttpClient = OkHttpClient.Builder()
             .cache(createCache(context))
@@ -123,11 +128,6 @@ object Graph {
                         .build()
                 )
             }
-            .build()
-
-        moshi = Moshi.Builder()
-            .add(KotlinJsonAdapterFactory())
-            .add(Date::class.java, Rfc3339DateJsonAdapter().nullSafe())
             .build()
 
         retrofit = Retrofit.Builder()

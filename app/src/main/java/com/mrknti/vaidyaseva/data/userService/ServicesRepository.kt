@@ -9,7 +9,10 @@ interface ServicesRepository {
     suspend fun bookServices(
         serviceType: String,
         serviceTime: Date,
-        comment: String?
+        comment: String?,
+        requesterId: Int?,
+        source: Int?,
+        destination: Int?,
     ): Flow<Service>
     suspend fun acknowledgeService(serviceId: Int): Flow<Unit>
     suspend fun completeService(serviceId: Int): Flow<Unit>

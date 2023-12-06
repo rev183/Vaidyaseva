@@ -8,12 +8,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.mrknti.vaidyaseva.data.user.User
 import com.mrknti.vaidyaseva.ui.auth.LoginPage
 import com.mrknti.vaidyaseva.ui.building.BuildingDetail
 import com.mrknti.vaidyaseva.ui.chats.ChatDetail
 import com.mrknti.vaidyaseva.ui.home.HomeBottomTabs
 import com.mrknti.vaidyaseva.ui.onboarding.DocumentUpload
 import com.mrknti.vaidyaseva.ui.onboarding.OnboardClient
+import com.mrknti.vaidyaseva.ui.search.SearchType
 import com.mrknti.vaidyaseva.ui.search.UserSearch
 import com.mrknti.vaidyaseva.ui.services.BookService
 import com.mrknti.vaidyaseva.ui.services.ServiceDetail
@@ -40,6 +42,8 @@ object NavGraph {
 }
 
 object NavArgKeys {
+    const val REQUESTER = "requester"
+    const val SEARCH_TYPE = "search_type"
     const val SERVICE_TYPE = "service_type"
     const val CHAT_THREAD_ID = "thread_id"
     const val SERVICE_DATA = "service_data"
@@ -61,6 +65,8 @@ fun VaidyasevaNavigationGraph(navController: NavHostController) {
 
 fun docUploadRoute(userJson: String) = "${Screen.DocUpload.route}/${userJson}}"
 
+fun searchRoute(searchType: SearchType) = "${Screen.UserSearch.route}/${searchType.name}}"
+
 fun NavGraphBuilder.authGraph(navController: NavHostController) {
     navigation(startDestination = Screen.Login.route, route = NavGraph.AUTH_ROUTE) {
         composable(Screen.Login.route) {
@@ -81,10 +87,14 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
             arguments = listOf(
                 navArgument(NavArgKeys.SERVICE_TYPE) { type = NavType.StringType }
             )
-        ) {
-            BookService {
-                navController.popBackStack(Screen.HomeTabs.route, false)
-            }
+        ) { entry ->
+            val requesterFlow = entry.savedStateHandle.getStateFlow<User?>(NavArgKeys.REQUESTER, null)
+
+            BookService(
+                onFinishClick = { navController.popBackStack(Screen.HomeTabs.route, false) },
+                onGotoSearch = { navController.navigate(searchRoute(SearchType.GET_USER)) },
+                requesterFlow = requesterFlow
+            )
         }
         composable(
             route = "${Screen.ChatDetail.route}/{${NavArgKeys.CHAT_THREAD_ID}}}",
@@ -120,10 +130,26 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
                 navController.popBackStack(Screen.HomeTabs.route, false)
             }
         }
-        composable(route = Screen.UserSearch.route) {
-            UserSearch { userJson ->
-                navController.navigate(docUploadRoute(userJson))
-            }
+        composable(
+            route = "${Screen.UserSearch.route}/{${NavArgKeys.SEARCH_TYPE}}}",
+            arguments = listOf(
+                navArgument(NavArgKeys.SEARCH_TYPE) {
+                    type = NavType.EnumType(SearchType::class.java)
+                },
+            )
+        ) {
+            UserSearch(
+                onUploadClick = { userJson ->
+                    navController.navigate(docUploadRoute(userJson))
+                },
+                onSearchDone = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set(
+                        NavArgKeys.REQUESTER,
+                        it
+                    )
+                    navController.popBackStack()
+                }
+            )
         }
         composable(
             route = "${Screen.BuildingDetail.route}/{${NavArgKeys.BUILDING_ID}}}",

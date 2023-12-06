@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mrknti.vaidyaseva.data.UserRoles
+import com.mrknti.vaidyaseva.data.UserRole
 import com.mrknti.vaidyaseva.ui.components.LoadingView
 
 @Composable
@@ -103,7 +103,7 @@ fun OnboardClient(onRegister: (String) -> Unit) {
 
         Spacer(modifier = Modifier.height(20.dp))
         // role selection
-        RoleSelectDropdown(viewModel::setRole)
+        RoleSelectDropdown(viewModel::setRole, viewModel.selfUser.roles!!)
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -124,11 +124,11 @@ fun OnboardClient(onRegister: (String) -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RoleSelectDropdown(onRoleSelected: (String) -> Unit) {
+fun RoleSelectDropdown(onRoleSelected: (UserRole) -> Unit, roles: List<String>) {
     var expanded by remember { mutableStateOf(false) }
-    val options = UserRoles.CREATABLE_ROLES
-    var selectedOption by remember { mutableStateOf(options[0]) }
-    val textValue by remember { derivedStateOf { selectedOption.second } }
+    val options = UserRole.creatableRolesByMe(roles)
+    var selectedOption by remember { mutableStateOf(options.firstOrNull() ?: UserRole.CLIENT ) }
+    val textValue by remember { derivedStateOf { selectedOption.uiString } }
     ExposedDropdownMenuBox(expanded = false, onExpandedChange = { expanded = !expanded } ) {
         TextField(
             modifier = Modifier.menuAnchor(),
@@ -145,10 +145,10 @@ fun RoleSelectDropdown(onRoleSelected: (String) -> Unit) {
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option.second) },
+                    text = { Text(option.uiString) },
                     onClick = {
                         selectedOption = option
-                        onRoleSelected(option.first)
+                        onRoleSelected(option)
                         expanded = false
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,

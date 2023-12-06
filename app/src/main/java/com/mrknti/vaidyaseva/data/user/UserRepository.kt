@@ -13,4 +13,7 @@ interface UserRepository {
         expiryTime: Date,
         document: MediaData,
     ): Flow<Unit>
+    suspend fun getInbox(): Flow<List<InboxItem>>
+
+    suspend fun getUserInfo(userId: Int?): Flow<UserInfo>
 }

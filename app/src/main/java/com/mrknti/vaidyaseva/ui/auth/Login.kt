@@ -1,5 +1,6 @@
 package com.mrknti.vaidyaseva.ui.auth
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,6 +47,7 @@ fun LoginPage(onLogin: () -> Unit) {
     if (viewState.isLoading) {
         LoadingView(alignment = Alignment.TopCenter)
     } else if (viewState.error.isNotEmpty()) {
+        Log.d("LoginPage", "Error: ${viewState.error}")
         LaunchedEffect(key1 = viewState.error) {
             Toast.makeText(context, viewState.error, Toast.LENGTH_SHORT).show()
         }

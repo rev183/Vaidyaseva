@@ -7,9 +7,9 @@ import com.mrknti.vaidyaseva.Graph
 import com.mrknti.vaidyaseva.data.network.handleError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class FCMNotificationService : FirebaseMessagingService() {
 
@@ -19,17 +19,20 @@ class FCMNotificationService : FirebaseMessagingService() {
         super.onNewToken(token)
         val repository = Graph.authRepository
         val dataStoreManager = Graph.dataStoreManager
-        val oldToken = runBlocking { dataStoreManager.fcmToken.first() }
-        if (oldToken == token && dataStoreManager.isFCMRegistrationCompleted) {
-            return
-        }
         CoroutineScope(Dispatchers.IO).launch {
+            delay(1000)
+            val oldToken = dataStoreManager.fcmToken.first()
+            if (oldToken == token && dataStoreManager.isFCMRegistrationCompleted) {
+                return@launch
+            }
             if (dataStoreManager.isLoggedIn) {
-                repository.registerFCMToken(token)
+                Log.d(TAG, "Register FCM receiver oldToken: $oldToken, newToken: $token")
+                repository.registerFCMToken(token, dataStoreManager.getRegisteredDevice().first())
                     .handleError { Log.e(TAG, "Failed to register FCM token", it) }
                     .collect {
-                        Graph.dataStoreManager.saveFCMToken(token)
-                        Graph.dataStoreManager.isFCMRegistrationCompleted = true
+                        dataStoreManager.saveFCMToken(token)
+                        dataStoreManager.isFCMRegistrationCompleted = true
+                        dataStoreManager.saveRegisteredDevice(it.deviceId)
                     }
             } else {
                 dataStoreManager.saveFCMToken(token)

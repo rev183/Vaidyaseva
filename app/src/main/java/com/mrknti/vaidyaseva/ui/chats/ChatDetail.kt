@@ -88,7 +88,7 @@ fun ChatDetail(modifier: Modifier = Modifier, threadId: Int? = null) {
         }
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(modifier.fillMaxSize()) {
         ChatMessages(
             messages = viewState.messages,
             listState = viewState.listState,
@@ -116,6 +116,10 @@ fun ChatMessages(
         reverseLayout = true,
         verticalArrangement = Arrangement.spacedBy(12.dp, alignment = Alignment.Bottom),
     ) {
+
+        item {
+            Spacer(modifier = Modifier.size(1.dp))
+        }
 
         items(items = messages, key = { it.id }) {
             ChatMessageItem(it)

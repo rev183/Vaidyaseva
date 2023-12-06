@@ -1,6 +1,7 @@
 package com.mrknti.vaidyaseva.ui.search
 
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
@@ -13,6 +14,8 @@ import com.mrknti.vaidyaseva.data.eventBus.RoomCheckedOutEvent
 import com.mrknti.vaidyaseva.data.getDocumentUrl
 import com.mrknti.vaidyaseva.data.network.handleError
 import com.mrknti.vaidyaseva.data.user.User
+import com.mrknti.vaidyaseva.data.user.UserInfo
+import com.mrknti.vaidyaseva.ui.NavArgKeys
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +31,7 @@ import kotlinx.coroutines.runBlocking
 import java.util.Date
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-class UserSearchViewModel : ViewModel() {
+class UserSearchViewModel(saveState: SavedStateHandle) : ViewModel() {
     private val userRepository = Graph.userRepository
     private val buildingRepository = Graph.buildingRepository
     val searchQuery: Flow<String> = MutableSharedFlow(1)
@@ -40,6 +43,7 @@ class UserSearchViewModel : ViewModel() {
     private val userJsonAdapter = Graph.moshi.adapter(User::class.java)
     val selectedUserJson: String
     get() = userJsonAdapter.toJson(state.value.selectedUser)
+    val searchType: SearchType = saveState[NavArgKeys.SEARCH_TYPE] ?: SearchType.MAIN
 
     init {
         viewModelScope.launch {
@@ -76,15 +80,25 @@ class UserSearchViewModel : ViewModel() {
                 visaUrl = null
             )
             viewModelScope.launch {
-                userRepository.getAllDocuments(user.id)
+                userRepository.getUserInfo(user.id)
                     .handleError { _state.value = _state.value.copy(errorMessage = it.message ?: "") }
-                    .collect { userDocuments ->
-                        userDocuments.find { it.documentType == UserDocumentType.PASSPORT }?.id?.let { id ->
-                            _state.value = _state.value.copy(passportUrl = getDocumentUrl(id))
+                    .collect { userInfo ->
+                        val userDocuments = userInfo.documents
+                        if (!userDocuments.isNullOrEmpty()) {
+                            userDocuments.find { it.documentType == UserDocumentType.PASSPORT }?.let {
+                                _state.value = _state.value.copy(
+                                    passportUrl = getDocumentUrl(it.id),
+                                    passportExpiry = it.expiryTime
+                                )
+                            }
+                            userDocuments.find { it.documentType == UserDocumentType.VISA }?.let {
+                                _state.value = _state.value.copy(
+                                    visaUrl = getDocumentUrl(it.id),
+                                    visaExpiry = it.expiryTime
+                                )
+                            }
                         }
-                        userDocuments.find { it.documentType == UserDocumentType.VISA }?.id?.let { id ->
-                            _state.value = _state.value.copy(visaUrl = getDocumentUrl(id))
-                        }
+                        _state.value = _state.value.copy(selectedUserInfo = userInfo)
                     }
             }
         }
@@ -104,7 +118,7 @@ class UserSearchViewModel : ViewModel() {
     }
 
     fun clearSelectedUser() {
-        _state.value = _state.value.copy(selectedUser = null)
+        _state.value = _state.value.copy(selectedUser = null, selectedUserInfo = null)
     }
 
     fun bookRoom(room: HostelRoom, checkIn: Date, checkOut: Date) {
@@ -143,10 +157,13 @@ class UserSearchViewModel : ViewModel() {
 data class UserSearchViewState(
     val errorMessage: String = "",
     val selectedUser: User? = null,
+    val selectedUserInfo: UserInfo? = null,
     val passportUrl: String? = null,
     val passportUri: Uri? = null,
+    val passportExpiry: Date? = null,
     val visaUrl: String? = null,
     val visaUri: Uri? = null,
+    val visaExpiry: Date? = null,
     val searchResults: List<User> = emptyList()
 )
 

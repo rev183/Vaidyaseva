@@ -3,6 +3,8 @@ package com.mrknti.vaidyaseva.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
+import com.mrknti.vaidyaseva.data.eventBus.EventBus
+import com.mrknti.vaidyaseva.data.eventBus.ReFetchFCMTokenEvent
 import com.mrknti.vaidyaseva.data.network.handleError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,18 +29,25 @@ class AuthViewModel : ViewModel() {
             authRepository.login(_state.value.username, _state.value.password)
                 .handleError { e ->
                     _state.value = _state.value.copy(isLoading = false, error = e.message ?: "") }
-                .map {
-                    dataManager.saveAuthToken(it.authToken)
-                    dataManager.saveUser(it.userId, it.displayName, it.roles)
+                .map { authData ->
+                    dataManager.saveAuthToken(authData.authToken)
+                    dataManager.saveUser(authData.userId, authData.displayName, authData.roles)
                     _state.value = _state.value.copy(isLoading = false)
                     if (!dataManager.isFCMRegistrationCompleted) {
-                        authRepository.registerFCMToken(dataManager.fcmToken.first())
-                            .handleError { e ->
-                                _state.value = _state.value.copy(error = e.message ?: "")
-                            }.collect {
-                                dataManager.isFCMRegistrationCompleted = true
-                                _actions.value = AuthActions.Login
-                            }
+                        val token = dataManager.fcmToken.first()
+                        if (token.isEmpty()) {
+                            _actions.value = AuthActions.Login
+                            EventBus.publish(ReFetchFCMTokenEvent)
+                        } else {
+                            authRepository.registerFCMToken(token, dataManager.getRegisteredDevice().first())
+                                .handleError { e ->
+                                    _state.value = _state.value.copy(error = e.message ?: "")
+                                }.collect {
+                                    dataManager.isFCMRegistrationCompleted = true
+                                    dataManager.saveRegisteredDevice(it.deviceId)
+                                    _actions.value = AuthActions.Login
+                                }
+                        }
                     } else {
                         _actions.value = AuthActions.Login
                     }

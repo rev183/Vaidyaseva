@@ -1,4 +1,4 @@
-package com.mrknti.vaidyaseva.ui
+package com.mrknti.vaidyaseva.ui.updates
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
@@ -39,13 +38,13 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Inbox(modifier: Modifier = Modifier, onChatClick: (ChatThread) -> Unit) {
+fun InboxTabs(modifier: Modifier = Modifier, onChatClick: (ChatThread) -> Unit) {
     Column(
         modifier = modifier.windowInsetsPadding(
             WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)
         )
     ) {
-        var selectedTab by remember { mutableStateOf(InboxTab.Messages)}
+        var selectedTab by remember { mutableStateOf(InboxTab.Notifications)}
         val pagerState = rememberPagerState(pageCount = { 2 })
         val coroutineScope = rememberCoroutineScope()
 
@@ -66,16 +65,11 @@ fun Inbox(modifier: Modifier = Modifier, onChatClick: (ChatThread) -> Unit) {
             when (index) {
                 InboxTab.Messages.ordinal -> Chats(modifier = Modifier
                     .fillMaxSize(), onChatClick = onChatClick)
-                InboxTab.Notifications.ordinal -> Notifications(modifier = Modifier
+                InboxTab.Notifications.ordinal -> Inbox(modifier = Modifier
                     .fillMaxSize())
             }
         }
     }
-}
-
-@Composable
-fun Notifications(modifier: Modifier) {
-    Text(text = "Notifications")
 }
 
 @Composable
@@ -126,5 +120,5 @@ fun InboxTabIndicator(
 }
 
 enum class InboxTab {
-    Messages, Notifications
+    Notifications, Messages
 }

@@ -3,6 +3,7 @@ package com.mrknti.vaidyaseva.ui.components
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -19,7 +20,9 @@ fun DatePickerDialog(
     onDateSelected: (Date) -> Unit,
     dateValidator: (Long) -> Boolean = { it >= TODAY_START }
 ) {
-    val datePickerState = rememberDatePickerState()
+    val datePickerState = rememberDatePickerState(selectableDates = object : SelectableDates {
+        override fun isSelectableDate(utcTimeMillis: Long) = dateValidator(utcTimeMillis)
+    })
 
     val confirmEnabled =
         remember { derivedStateOf { datePickerState.selectedDateMillis != null } }
@@ -43,6 +46,6 @@ fun DatePickerDialog(
             }
         }
     ) {
-        DatePicker(state = datePickerState, dateValidator = dateValidator)
+        DatePicker(state = datePickerState)
     }
 }

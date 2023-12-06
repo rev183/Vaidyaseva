@@ -5,8 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
 import com.mrknti.vaidyaseva.data.ServiceStatus
-import com.mrknti.vaidyaseva.data.ServiceTypeUI
+import com.mrknti.vaidyaseva.data.ServiceType
 import com.mrknti.vaidyaseva.data.eventBus.EventBus
+import com.mrknti.vaidyaseva.data.eventBus.ServiceAcknowledgeEvent
 import com.mrknti.vaidyaseva.data.eventBus.ServiceCompletedEvent
 import com.mrknti.vaidyaseva.data.network.handleError
 import com.mrknti.vaidyaseva.data.userService.Service
@@ -28,7 +29,7 @@ class ServiceDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
     private val servicesRepository = Graph.servicesRepository
     private val dataStoreManager = Graph.dataStoreManager
     private val service = jsonAdapter.fromJson(serviceJson)!!
-    private val selfUser = runBlocking { Graph.dataStoreManager.getUser().first() }
+    private val selfUser = runBlocking { dataStoreManager.getUser().first() }
 
     private val _state = MutableStateFlow(ServiceDetailUIState(service = service))
     val state = _state.asStateFlow()
@@ -36,6 +37,20 @@ class ServiceDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
     val canCompleteService = service.assignee?.id == selfUser?.id
     val canAcknowledgeService =
         !service.isAcknowledged && canAssignToUser(selfUser?.roles ?: emptyList())
+
+    init {
+        if (service.type == ServiceType.TRANSPORT.value && service.source != null && service.destination != null) {
+            viewModelScope.launch {
+                dataStoreManager.getTransportDetails(service.source, service.destination)
+                    .collect { (source, destination) ->
+                        _state.value = _state.value.copy(
+                            source = source,
+                            destination = destination
+                        )
+                    }
+            }
+        }
+    }
 
     fun onAcknowledgeCompleteClick() {
         _state.value = _state.value.copy(isLoading = true)
@@ -50,7 +65,7 @@ class ServiceDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
                     _state.value = _state.value.copy(isLoading = false, service = updatedService)
                     return@combine updatedService
                 }.collect {
-                    EventBus.publish(ServiceCompletedEvent(it))
+                    EventBus.publish(ServiceAcknowledgeEvent(it))
                 }
             } else {
                 servicesRepository.completeService(service.id)
@@ -68,7 +83,7 @@ class ServiceDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
     }
 
     private fun canAssignToUser(userRoles: List<String>): Boolean {
-        val serviceType = ServiceTypeUI.valueOf(service.type)
+        val serviceType = ServiceType.getByValue(service.type)
         userRoles.forEach {
             if (serviceType.canBeAssignedTo(it)) {
                 return true
@@ -81,5 +96,7 @@ class ServiceDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
 data class ServiceDetailUIState(
     val isLoading: Boolean = false,
     val service: Service,
-    val error: String = ""
+    val error: String = "",
+    val source: String? = null,
+    val destination: String? = null,
 )

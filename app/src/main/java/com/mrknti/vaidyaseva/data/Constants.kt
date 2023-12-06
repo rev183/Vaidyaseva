@@ -1,94 +1,116 @@
 package com.mrknti.vaidyaseva.data
 
+import androidx.annotation.DrawableRes
+import com.mrknti.vaidyaseva.R
 import java.util.Locale
 
 const val HOST_URL = "http://35.207.46.206:8080/"
+const val APOLLO_HOSPITAL_ID = 36
 
-object UserRoles {
-    const val CLIENT = "CLIENT"
-    const val ADMIN = "ADMIN"
-    const val TRANSPORT = "TRANSPORT"
-    const val HOUSEKEEPING = "HOUSEKEEPING"
-    const val MANAGER = "MANAGER"
-    const val SUPER_USER = "SUPER_USER"
-
-    val CREATABLE_ROLES = listOf(
-        Pair(CLIENT, "Client"),
-        Pair(TRANSPORT, "Transport"),
-        Pair(HOUSEKEEPING, "Housekeeping"),
-        Pair(MANAGER, "Manager")
-    )
-}
-
-enum class UserRoleUI(val value: String) {
+enum class UserRole(val value: String) {
     CLIENT("CLIENT"),
-    ADMIN("ADMIN"),
     TRANSPORT("TRANSPORT"),
     HOUSEKEEPING("HOUSEKEEPING"),
+    RECRUITER("RECRUITER"),
     MANAGER("MANAGER"),
-    SUPER_USER("SUPER_USER");
+    ADMIN("ADMIN");
 
     val uiString: String
         get() = when (this) {
             CLIENT -> "Client"
-            ADMIN -> "Admin"
             TRANSPORT -> "Transport"
             HOUSEKEEPING -> "Housekeeping"
+            RECRUITER -> "Recruiter"
             MANAGER -> "Manager"
-            SUPER_USER -> "Super User"
+            ADMIN -> "Admin"
         }
 
+
+
     companion object {
-        fun getByValue(value: String): UserRoleUI {
+        fun getByValue(value: String): UserRole {
             return when (value) {
                 "CLIENT" -> CLIENT
-                "ADMIN" -> ADMIN
                 "TRANSPORT" -> TRANSPORT
                 "HOUSEKEEPING" -> HOUSEKEEPING
+                "RECRUITER" -> RECRUITER
                 "MANAGER" -> MANAGER
-                "SUPER_USER" -> SUPER_USER
+                "ADMIN" -> ADMIN
                 else -> CLIENT
+            }
+        }
+
+        fun creatableRolesByMe(role: List<String>): List<UserRole> {
+            if (role.contains(ADMIN.value)) return listOf(
+                CLIENT,
+                TRANSPORT,
+                HOUSEKEEPING,
+                RECRUITER,
+                MANAGER
+            ) else if (role.contains(MANAGER.value)) return listOf(
+                CLIENT,
+                TRANSPORT,
+                HOUSEKEEPING,
+                RECRUITER,
+            ) else if (role.contains(RECRUITER.value)) return listOf(
+                CLIENT,
+            ) else {
+                return emptyList()
             }
         }
     }
 }
 
-object ServiceType {
-    const val CAB = "CAB"
-    const val CLEANING = "CLEANING"
-    const val PLUMBING = "PLUMBING"
-    const val MEDICINE = "MEDICINE"
-    const val NORMAL = "NORMAL"
-    const val ROOM_SERVICE = "ROOM_SERVICE"
-}
-
-enum class ServiceTypeUI(val value: String) {
-    CAB("CAB"),
-    CLEANING("CLEANING"),
-    PLUMBING("PLUMBING"),
-    MEDICINE("MEDICINE"),
-    NORMAL("NORMAL"),
-    ROOM_SERVICE("ROOM_SERVICE");
+enum class ServiceType(val value: String) {
+    TRANSPORT("TRANSPORT"),
+    VISA_RENEWAL("VISA_RENEWAL"),
+    HOUSE_KEEPING("HOUSE_KEEPING"),
+    NORMAL("NORMAL");
 
     val uiString: String
         get() = when (this) {
-            CAB -> "Cab"
-            CLEANING -> "Cleaning"
-            PLUMBING -> "Plumbing"
-            MEDICINE -> "Medicine"
+            TRANSPORT -> "Cab"
+            VISA_RENEWAL -> "Visa Renewal"
             NORMAL -> "General"
-            ROOM_SERVICE -> "Room Service"
+            HOUSE_KEEPING -> "Room Service"
+        }
+
+    val needsRoom: Boolean
+        get() = when (this) {
+            TRANSPORT -> true
+            VISA_RENEWAL -> false
+            NORMAL -> false
+            HOUSE_KEEPING -> true
+        }
+
+    @get:DrawableRes
+    val iconRes: Int
+        get() = when (this) {
+            TRANSPORT -> R.drawable.local_taxi_24
+            VISA_RENEWAL -> R.drawable.task_24
+            NORMAL -> R.drawable.question_circle_24
+            HOUSE_KEEPING -> R.drawable.concierge_24
         }
 
     fun canBeAssignedTo(role: String): Boolean {
-        if (role == UserRoles.SUPER_USER) return true
+        if (role == UserRole.ADMIN.value) return true
         return when (this) {
-            CAB -> role == UserRoles.TRANSPORT
-            CLEANING -> role == UserRoles.HOUSEKEEPING
-            PLUMBING -> role == UserRoles.HOUSEKEEPING
-            MEDICINE -> role == UserRoles.HOUSEKEEPING
-            NORMAL -> role == UserRoles.MANAGER
-            ROOM_SERVICE -> role == UserRoles.MANAGER
+            TRANSPORT -> role == UserRole.TRANSPORT.value
+            VISA_RENEWAL -> role == UserRole.MANAGER.value
+            NORMAL -> role == UserRole.MANAGER.value
+            HOUSE_KEEPING -> role == UserRole.HOUSEKEEPING.value
+        }
+    }
+
+    companion object {
+        fun getByValue(value: String): ServiceType {
+            return when (value) {
+                "TRANSPORT" -> TRANSPORT
+                "VISA_RENEWAL" -> VISA_RENEWAL
+                "HOUSE_KEEPING" -> HOUSE_KEEPING
+                "NORMAL" -> NORMAL
+                else -> NORMAL
+            }
         }
     }
 }
@@ -124,6 +146,7 @@ object UserDocumentType {
 }
 
 fun getDocumentUrl(id: Int) = "${HOST_URL}file/data?documentId=$id"
+fun getBuildingGalleryUrl(id: Int) = "${HOST_URL}building-gallery/data?documentId=$id"
 
 object HttpCodes {
     const val UNAUTHORIZED = 401

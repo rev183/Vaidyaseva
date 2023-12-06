@@ -18,7 +18,10 @@ class AuthRepositoryImpl(private val apiService: ApiService) : AuthRepository {
     ): Flow<User> =
         apiService.registerUser(firstName, lastName, username, password, role)
 
-    override suspend fun registerFCMToken(token: String): Flow<Unit> =
-        apiService.registerFCMToken(token)
+    override suspend fun registerFCMToken(token: String, deviceId: Int?): Flow<RegisterDevice> =
+        apiService.registerFCMToken(token, deviceId)
+
+    override suspend fun logout(deviceId: Int?): Flow<Unit> =
+        apiService.logout(deviceId)
 
 }
