@@ -2,6 +2,7 @@ package com.mrknti.vaidyaseva.ui.building
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.mrknti.vaidyaseva.R
 import com.mrknti.vaidyaseva.data.building.BuildingData
 import com.mrknti.vaidyaseva.data.building.HostelRoom
@@ -48,10 +50,11 @@ import com.mrknti.vaidyaseva.ui.components.LoadingView
 import com.mrknti.vaidyaseva.util.DateFormat
 import com.mrknti.vaidyaseva.util.differenceInHours
 import com.mrknti.vaidyaseva.util.formatDate
+import java.net.URLEncoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BuildingDetail() {
+fun BuildingDetail(navigateToFullScreenImage: (String) -> Unit) {
     val viewModel: BuildingDetailViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val localContext = LocalContext.current
@@ -80,12 +83,20 @@ fun BuildingDetail() {
                         onRoomClick = {
                             showRoomSheet = it
                         })
+                } else {
+                    BuildingGallery(
+                        picUrls = viewState.buildingData!!.getGalleryUrls(),
+                        onImageClick = {
+                            val urlE = URLEncoder.encode(it, "utf-8")
+                            navigateToFullScreenImage(urlE)
+                        })
                 }
             }
         }
         if (showRoomSheet != null) {
             AssignRoom(
                 room = showRoomSheet!!,
+                buildingId = viewModel.buildingId,
                 onDismissRequest = { showRoomSheet = null },
                 sheetState = sheetState
             )
@@ -211,6 +222,38 @@ fun RoomItem(room: HostelRoom, onRoomClick: (HostelRoom) -> Unit) {
                 style = MaterialTheme.typography.labelSmall
                     .copy(color = MaterialTheme.colorScheme.onPrimary)
             )
+        }
+    }
+}
+
+@Composable
+fun BuildingGallery(picUrls: List<String>, onImageClick: (String) -> Unit) {
+    Column {
+        Text(
+            text = "Gallery",
+            modifier = Modifier.padding(bottom = 16.dp),
+            style = MaterialTheme.typography.titleSmall)
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(picUrls, key = { it }) { url ->
+                val data = ImageRequest.Builder(LocalContext.current)
+                    .data(url)
+                    .build()
+                AsyncImage(
+                    model = data,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .clickable { onImageClick(url) }
+                        .size(width = 110.dp, height = 150.dp)
+                        .clip(MaterialTheme.shapes.medium),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
     }
 }

@@ -1,12 +1,15 @@
 package com.mrknti.vaidyaseva.ui.onboarding
 
 import android.widget.Toast
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -14,6 +17,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -26,12 +30,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mrknti.vaidyaseva.data.UserRole
@@ -43,6 +44,7 @@ fun OnboardClient(onRegister: (String) -> Unit) {
     val viewModel: OnboardingViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val actions = viewModel.actions.collectAsStateWithLifecycle()
+    val scrollState = rememberScrollState()
     val context = LocalContext.current
     val isRegisterEnabled by remember {
         derivedStateOf {
@@ -65,33 +67,39 @@ fun OnboardClient(onRegister: (String) -> Unit) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(20.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp)
+            .scrollable(scrollState, Orientation.Vertical),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "Add Client",
+            text = "Add User",
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.CenterHorizontally),
-            style = TextStyle(fontSize = 32.sp, fontFamily = FontFamily.Cursive)
+            style = MaterialTheme.typography.titleLarge
         )
         Spacer(modifier = Modifier.height(20.dp))
         TextField(
             label = { Text(text = "First name") },
             value = viewState.firstName,
-            onValueChange = { viewModel.setFirstName(it) })
+            onValueChange = { viewModel.setFirstName(it) }
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
         TextField(
             label = { Text(text = "Last name") },
             value = viewState.lastName,
-            onValueChange = { viewModel.setLastName(it) })
+            onValueChange = { viewModel.setLastName(it) }
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
         TextField(
             label = { Text(text = "Username") },
             value = viewState.username,
-            onValueChange = { viewModel.setUsername(it) })
+            onValueChange = { viewModel.setUsername(it) }
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
         TextField(
@@ -99,16 +107,44 @@ fun OnboardClient(onRegister: (String) -> Unit) {
             value = viewState.password,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            onValueChange = { viewModel.setPassword(it) })
+            onValueChange = { viewModel.setPassword(it) }
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+        TextField(
+            label = { Text(text = "Confirm Password") },
+            value = viewState.confirmPassword,
+            onValueChange = { viewModel.setConfirmPassword(it) }
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+        TextField(
+            label = { Text(text = "Phone (optional)") },
+            value = viewState.phoneNum,
+            onValueChange = { viewModel.setPhoneNum(it) })
+
+        Spacer(modifier = Modifier.height(20.dp))
+        TextField(
+            label = { Text(text = "Email (optional)") },
+            value = viewState.email,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            onValueChange = { viewModel.setEmail(it) })
 
         Spacer(modifier = Modifier.height(20.dp))
         // role selection
-        RoleSelectDropdown(viewModel::setRole, viewModel.selfUser.roles!!)
+        RoleSelectDropdown(viewModel::setRole, viewModel.selfUser.roles)
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = { viewModel.performSignup() },
+            onClick = {
+                if (viewState.password != viewState.confirmPassword) {
+                    Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+                viewModel.performSignup()
+            },
             shape = RoundedCornerShape(50.dp),
             modifier = Modifier
                 .fillMaxWidth()

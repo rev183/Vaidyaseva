@@ -17,8 +17,10 @@ import com.mrknti.vaidyaseva.data.eventBus.ServiceCompletedEvent
 import com.mrknti.vaidyaseva.data.eventBus.ServiceRaisedEvent
 import com.mrknti.vaidyaseva.data.network.handleError
 import com.mrknti.vaidyaseva.data.userService.Service
+import com.mrknti.vaidyaseva.ui.home.LoginState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -73,6 +75,14 @@ class ServicesViewModel(private val servicesType: String) : ViewModel() {
                 if (index == -1) {
                     serviceList.add(0, newService)
                     _state.value = _state.value.copy(services = serviceList)
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            dataStoreManager.authFlow.distinctUntilChanged().collect { loginState ->
+                if (loginState == LoginState.LoggedIn) {
+                    getServices()
                 }
             }
         }

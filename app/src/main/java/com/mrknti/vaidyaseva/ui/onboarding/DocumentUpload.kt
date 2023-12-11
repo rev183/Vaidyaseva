@@ -4,6 +4,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,13 +13,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -55,10 +58,12 @@ import com.mrknti.vaidyaseva.ui.components.DatePickerDialog
 import com.mrknti.vaidyaseva.ui.components.ProgressIndicatorMedium
 import com.mrknti.vaidyaseva.util.DateFormat
 import com.mrknti.vaidyaseva.util.formatDate
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.util.Date
 
 @Composable
-fun DocumentUpload(onFinishClick: () -> Unit) {
+fun DocumentUpload(onFinishClick: () -> Unit, navigateToFullScreenImage: (String) -> Unit) {
 
     val viewModel: DocumentUploadViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
@@ -68,7 +73,7 @@ fun DocumentUpload(onFinishClick: () -> Unit) {
     val scrollState = rememberScrollState()
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
+        contract = ActivityResultContracts.GetMultipleContents(),
         onResult = {
             if (fileSelectedFor == UserDocumentType.PASSPORT) {
                 viewModel.setImageUri(it, UserDocumentType.PASSPORT)
@@ -79,13 +84,13 @@ fun DocumentUpload(onFinishClick: () -> Unit) {
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = {
-            if (!it) {
+            if (!it && cameraOutputUri == null) {
                 return@rememberLauncherForActivityResult
             }
             if (fileSelectedFor == UserDocumentType.PASSPORT) {
-                viewModel.setImageUri(cameraOutputUri, UserDocumentType.PASSPORT)
+                viewModel.setImageUri(listOf(cameraOutputUri!!), UserDocumentType.PASSPORT)
             } else {
-                viewModel.setImageUri(cameraOutputUri, UserDocumentType.VISA)
+                viewModel.setImageUri(listOf(cameraOutputUri!!), UserDocumentType.VISA)
             }
         }
     )
@@ -151,8 +156,7 @@ fun DocumentUpload(onFinishClick: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             UploadDocument(
                 docType = UserDocumentType.PASSPORT,
-                imageUri = viewState.passportUri,
-                imageUrl = viewState.passportUrl,
+                imageData = viewState.passportData,
                 expiry = viewState.passportExpiry,
                 token = viewModel.authToken,
                 uploadStatus = viewState.passportStatus,
@@ -161,18 +165,32 @@ fun DocumentUpload(onFinishClick: () -> Unit) {
                     openAlertDialog = type
                 },
                 onUploadClick = { type, expiry ->
-                    val mediaData = viewState.passportUri?.getMediaData(localContext)
-                    if (mediaData != null) {
-                        viewModel.uploadDocument(type, expiry, mediaData)
+                    val mediaData = viewState.passportData.filterIsInstance<Uri>().mapNotNull {
+                        it.getMediaData(localContext)
                     }
+                    if (mediaData.isNotEmpty()) {
+                        viewModel.uploadDocument(type, expiry, mediaData)
+                    } else {
+                        Toast.makeText(localContext, "No image to upload", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                },
+                onImageClick = {
+                    val imageData = viewState.passportData[it]
+                    val url = if (imageData is Uri) {
+                        imageData.toString()
+                    } else {
+                        imageData as String
+                    }
+                    val urlE = URLEncoder.encode(url, StandardCharsets.UTF_8.toString())
+                    navigateToFullScreenImage(urlE)
                 },
                 onClearDocument = viewModel::clearDocument
             )
             Spacer(modifier = Modifier.height(16.dp))
             UploadDocument(
                 docType = UserDocumentType.VISA,
-                imageUri = viewState.visaUri,
-                imageUrl = viewState.visaUrl,
+                imageData = viewState.visaData,
                 expiry = viewState.visaExpiry,
                 token = viewModel.authToken,
                 uploadStatus = viewState.visaStatus,
@@ -181,10 +199,25 @@ fun DocumentUpload(onFinishClick: () -> Unit) {
                     openAlertDialog = type
                 },
                 onUploadClick = { type, expiry ->
-                    val mediaData = viewState.visaUri?.getMediaData(localContext)
-                    if (mediaData != null) {
-                        viewModel.uploadDocument(type, expiry, mediaData)
+                    val mediaData = viewState.visaData.filterIsInstance<Uri>().mapNotNull {
+                        it.getMediaData(localContext)
                     }
+                    if (mediaData.isNotEmpty()) {
+                        viewModel.uploadDocument(type, expiry, mediaData)
+                    } else {
+                        Toast.makeText(localContext, "No image to upload", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                },
+                onImageClick = {
+                    val imageData = viewState.visaData[it]
+                    val url = if (imageData is Uri) {
+                        imageData.toString()
+                    } else {
+                        imageData as String
+                    }
+                    val urlE = URLEncoder.encode(url, StandardCharsets.UTF_8.toString())
+                    navigateToFullScreenImage(urlE)
                 },
                 onClearDocument = viewModel::clearDocument
             )
@@ -206,27 +239,19 @@ fun DocumentUpload(onFinishClick: () -> Unit) {
 @Composable
 fun UploadDocument(
     docType: Int,
-    imageUri: Uri?,
-    imageUrl: String?,
+    imageData: List<Any>,
     expiry: Date?,
     token: String,
     modifier: Modifier = Modifier,
     uploadStatus: UploadStatus,
     onSelectDocumentClick: (Int) -> Unit,
     onUploadClick: (Int, Date) -> Unit,
-    onClearDocument: (Int) -> Unit
+    onImageClick: (Int) -> Unit,
+    onClearDocument: (Int, Int) -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    var expireDate: Date? by remember { mutableStateOf(null) }
+    var expireDate: Date? by remember { mutableStateOf(expiry) }
     val context = LocalContext.current
-    val imageModel by remember(imageUri, imageUrl) { derivedStateOf {
-        if (imageUrl != null) {
-            ImageRequest.Builder(context)
-                .data(imageUrl)
-                .addHeader("token", token)
-                .build()
-        } else imageUri
-    } }
 
     if (showDatePicker) {
         DatePickerDialog(onDismiss = { showDatePicker = false }, onDateSelected = {
@@ -246,19 +271,19 @@ fun UploadDocument(
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        if (imageModel != null) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                AsyncImage(
-                    model = imageModel,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 200.dp)
-                )
-                TextButton(onClick = { onClearDocument(docType) }, modifier = Modifier.align(Alignment.TopEnd)) {
-                    Text(text = "Remove", style = MaterialTheme.typography.bodyMedium.copy(color = Color.Red))
+
+        if (imageData.isNotEmpty()) {
+
+            ImageGallery(
+                imageData = imageData,
+                token = token,
+                onImageClick = onImageClick,
+                onClearDocument = {
+                    onClearDocument(docType, it)
                 }
-            }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
             val displayExpiry = expireDate ?: expiry
             val expiryText = if (displayExpiry != null) {
                 "Expiry: ${displayExpiry.formatDate(DateFormat.DAY_MONTH_YEAR)}"
@@ -306,13 +331,79 @@ fun UploadDocument(
     }
 }
 
+@Composable
+fun ImageGallery(
+    imageData: List<Any>,
+    token: String,
+    showClose: Boolean = true,
+    onImageClick: (Int) -> Unit,
+    onClearDocument: (Int) -> Unit = {}
+) {
+    val context = LocalContext.current
+    val imageModels by remember(imageData) { derivedStateOf {
+        imageData.map {
+            if (it is Uri) {
+                it
+            } else {
+                ImageRequest.Builder(context)
+                    .data(it)
+                    .addHeader("token", token)
+                    .build()
+            }
+
+        }
+    } }
+
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(imageModels.size) { index ->
+            ImageUploadItem(
+                imageModels[index],
+                showClose,
+                onClearDocument = { onClearDocument(index) },
+                onImageClick = { onImageClick(index) })
+        }
+    }
+}
+
+@Composable
+fun ImageUploadItem(
+    imageModel: Any,
+    showClose: Boolean,
+    onClearDocument: () -> Unit,
+    onImageClick: () -> Unit = {}
+) {
+    Box(modifier = Modifier
+        .clip(RoundedCornerShape(8.dp))
+        .clickable { onImageClick() }) {
+        AsyncImage(
+            model = imageModel,
+            contentDescription = null,
+            modifier = Modifier
+                .sizeIn(maxWidth = 200.dp, maxHeight = 200.dp)
+        )
+        if (showClose) {
+            IconButton(
+                onClick = onClearDocument,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.close_24),
+                    contentDescription = "close icon",
+                    tint = Color.Red
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FileDestinationAlertDialog(
     onDismissRequest: () -> Unit,
     onConfirmation: (Int) -> Unit
 ) {
-    AlertDialog(onDismissRequest = onDismissRequest) {
+    BasicAlertDialog(onDismissRequest = onDismissRequest) {
         Card(
             modifier = Modifier
                 .height(275.dp)

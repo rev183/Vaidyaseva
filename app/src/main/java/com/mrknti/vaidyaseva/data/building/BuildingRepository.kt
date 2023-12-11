@@ -12,5 +12,5 @@ interface BuildingRepository {
         checkIn: Date,
         checkOut: Date
     ): Flow<RoomOccupancy>
-    suspend fun checkOutOccupancy(occupancyId: Int): Flow<Unit>
+    suspend fun checkOutOccupancy(occupancyId: Int): Flow<RoomOccupancy>
 }

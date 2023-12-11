@@ -1,7 +1,7 @@
 package com.mrknti.vaidyaseva.data.eventBus
 
-import android.net.Uri
 import android.util.Log
+import com.mrknti.vaidyaseva.data.building.OccupancyPayload
 import com.mrknti.vaidyaseva.data.building.RoomOccupancy
 import com.mrknti.vaidyaseva.data.chat.ChatMessage
 import com.mrknti.vaidyaseva.data.userService.Service
@@ -43,11 +43,18 @@ data class ServiceRaisedEvent(val service: Service)
 object UnAuthorizedAccessEvent
 
 // document upload event
-data class DocumentUploadEvent(val userId:Int, val documentType: Int, val documentUri: Uri?)
+data class DocumentUploadEvent(val userId:Int, val documentType: Int, val documentUri: List<Any>)
 
 // building events
-data class RoomBookedEvent(val occupancy: RoomOccupancy)
-data class RoomCheckedOutEvent(val occupancyId: Int, val roomId: Int)
+data class RoomBookedEvent(val occupancy: RoomOccupancy, val buildingId: Int)
+data class RoomCheckedOutEvent(
+    val occupancyId: Int,
+    val roomId: Int,
+    val buildingId: Int,
+    val status: Int
+)
+
+data class RoomOccupancyChangedEvent(val occupancy: OccupancyPayload)
 
 // refetch fcm token
 object ReFetchFCMTokenEvent

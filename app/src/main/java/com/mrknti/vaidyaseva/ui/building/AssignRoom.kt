@@ -60,7 +60,12 @@ import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: SheetState) {
+fun AssignRoom(
+    room: HostelRoom,
+    buildingId: Int,
+    onDismissRequest: () -> Unit,
+    sheetState: SheetState
+) {
     var roomState by remember { mutableStateOf(room) }
     var checkIn: Date? by remember { mutableStateOf(null) }
     var checkOut: Date? by remember { mutableStateOf(null) }
@@ -121,7 +126,7 @@ fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: Sheet
             Column {
                 for (occupancy in roomState.occupancies) {
                     UserOccupancy(occupancy) {
-                        searchViewModel.checkOutOccupancy(it, roomState.id)
+                        searchViewModel.checkOutOccupancy(it, roomState.id, buildingId)
                     }
                 }
             }
@@ -168,7 +173,8 @@ fun AssignRoom(room: HostelRoom, onDismissRequest: () -> Unit, sheetState: Sheet
                             searchViewModel.bookRoom(
                                 roomState,
                                 checkIn!!,
-                                checkOut!!
+                                checkOut!!,
+                                buildingId
                             )
                         }
                     },

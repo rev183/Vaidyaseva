@@ -16,17 +16,19 @@ class UserRepositoryImpl(private val apiService: ApiService) : UserRepository {
         clientId: Int,
         documentType: Int,
         expiryTime: Date,
-        document: MediaData
+        documents: List<MediaData>
     ): Flow<Unit> {
         return apiService.uploadDocument(
             clientId,
             documentType,
             convertToISO8601(expiryTime).toRequestBody(),
-            document.createMultiPartData("data")
+            documents.map { it.createMultiPartData("data")  }
         )
     }
     override suspend fun getInbox(): Flow<List<InboxItem>> = apiService.getInbox()
 
     override suspend fun getUserInfo(userId: Int?): Flow<UserInfo> = apiService.getUserInfo(userId)
 
+    override suspend fun deleteDocument(documentId: Int): Flow<Unit> =
+        apiService.deleteDocument(documentId)
 }

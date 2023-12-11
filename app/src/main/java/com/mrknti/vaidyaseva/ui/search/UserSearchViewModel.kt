@@ -1,6 +1,5 @@
 package com.mrknti.vaidyaseva.ui.search
 
-import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -61,9 +60,9 @@ class UserSearchViewModel(saveState: SavedStateHandle) : ViewModel() {
             EventBus.subscribe<DocumentUploadEvent> {
                 if (it.userId == state.value.selectedUser?.id) {
                     if (it.documentType == UserDocumentType.PASSPORT) {
-                        _state.value = _state.value.copy(passportUri = it.documentUri)
+                        _state.value = _state.value.copy(passportData = it.documentUri)
                     } else {
-                        _state.value = _state.value.copy(visaUri = it.documentUri)
+                        _state.value = _state.value.copy(visaData = it.documentUri)
                     }
                 }
             }
@@ -74,10 +73,7 @@ class UserSearchViewModel(saveState: SavedStateHandle) : ViewModel() {
         if (user != _state.value.selectedUser) {
             _state.value = _state.value.copy(
                 selectedUser = user,
-                passportUri = null,
-                visaUri = null,
-                passportUrl = null,
-                visaUrl = null
+                passportData = emptyList(),
             )
             viewModelScope.launch {
                 userRepository.getUserInfo(user.id)
@@ -85,18 +81,26 @@ class UserSearchViewModel(saveState: SavedStateHandle) : ViewModel() {
                     .collect { userInfo ->
                         val userDocuments = userInfo.documents
                         if (!userDocuments.isNullOrEmpty()) {
-                            userDocuments.find { it.documentType == UserDocumentType.PASSPORT }?.let {
-                                _state.value = _state.value.copy(
-                                    passportUrl = getDocumentUrl(it.id),
+                            val passportData = mutableListOf<Any>()
+                            val visaData = mutableListOf<Any>()
+                            var passportExpiry: Date? = null
+                            var visaExpiry: Date? = null
+
+                            userDocuments.forEach {
+                                if (it.documentType == UserDocumentType.PASSPORT) {
+                                    passportData.add(getDocumentUrl(it.id))
                                     passportExpiry = it.expiryTime
-                                )
-                            }
-                            userDocuments.find { it.documentType == UserDocumentType.VISA }?.let {
-                                _state.value = _state.value.copy(
-                                    visaUrl = getDocumentUrl(it.id),
+                                } else {
+                                    visaData.add(getDocumentUrl(it.id))
                                     visaExpiry = it.expiryTime
-                                )
+                                }
                             }
+                            _state.value = _state.value.copy(
+                                passportData = passportData,
+                                passportExpiry = passportExpiry,
+                                visaData = visaData,
+                                visaExpiry = visaExpiry
+                            )
                         }
                         _state.value = _state.value.copy(selectedUserInfo = userInfo)
                     }
@@ -121,25 +125,32 @@ class UserSearchViewModel(saveState: SavedStateHandle) : ViewModel() {
         _state.value = _state.value.copy(selectedUser = null, selectedUserInfo = null)
     }
 
-    fun bookRoom(room: HostelRoom, checkIn: Date, checkOut: Date) {
+    fun bookRoom(room: HostelRoom, checkIn: Date, checkOut: Date, buildingId: Int) {
         viewModelScope.launch {
             buildingRepository.bookRoom(room.id, _state.value.selectedUser!!.id, checkIn, checkOut)
                 .handleError { _state.value = _state.value.copy(errorMessage = it.message ?: "") }
                 .collect {
                     _state.value = _state.value.copy(selectedUser = null)
                     _action.emit(UserSearchViewAction.RoomBooked)
-                    EventBus.publish(RoomBookedEvent(it))
+                    EventBus.publish(RoomBookedEvent(it, buildingId))
                 }
         }
     }
 
-    fun checkOutOccupancy(occupancyId: Int, roomId: Int) {
+    fun checkOutOccupancy(occupancyId: Int, roomId: Int, buildingId: Int) {
         viewModelScope.launch {
             buildingRepository.checkOutOccupancy(occupancyId)
                 .handleError { _state.value = _state.value.copy(errorMessage = it.message ?: "") }
                 .collect {
                     _action.emit(UserSearchViewAction.OccupancyCheckedOut(occupancyId))
-                    EventBus.publish(RoomCheckedOutEvent(occupancyId, roomId))
+                    EventBus.publish(
+                        RoomCheckedOutEvent(
+                            occupancyId,
+                            roomId,
+                            buildingId,
+                            it.status
+                        )
+                    )
                 }
         }
     }
@@ -158,11 +169,9 @@ data class UserSearchViewState(
     val errorMessage: String = "",
     val selectedUser: User? = null,
     val selectedUserInfo: UserInfo? = null,
-    val passportUrl: String? = null,
-    val passportUri: Uri? = null,
+    val passportData: List<Any> = emptyList(),
     val passportExpiry: Date? = null,
-    val visaUrl: String? = null,
-    val visaUri: Uri? = null,
+    val visaData: List<Any> = emptyList(),
     val visaExpiry: Date? = null,
     val searchResults: List<User> = emptyList()
 )

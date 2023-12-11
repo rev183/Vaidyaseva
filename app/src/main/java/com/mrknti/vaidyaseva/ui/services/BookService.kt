@@ -113,7 +113,7 @@ fun BookService(
         .padding(top = 16.dp, bottom = 0.dp, start = 20.dp, end = 20.dp) ) {
         Column(modifier = modifier.fillMaxSize()) {
             Text(
-                text = "Book ${viewState.serviceType.uiString} Service",
+                text = viewState.serviceType.getBookingTitle(),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
             )
@@ -329,7 +329,6 @@ fun TransportMeta(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddRequester(requester: User?, gotoSearch: () -> Unit) {
     Column(modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp)) {
@@ -350,5 +349,14 @@ fun AddRequester(requester: User?, gotoSearch: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+private fun ServiceType.getBookingTitle(): String {
+    return when (this) {
+        ServiceType.TRANSPORT -> "Book a cab"
+        ServiceType.VISA_RENEWAL -> "Request visa renewal"
+        ServiceType.HOUSE_KEEPING -> "Book room service"
+        ServiceType.NORMAL -> "Raise any request"
     }
 }

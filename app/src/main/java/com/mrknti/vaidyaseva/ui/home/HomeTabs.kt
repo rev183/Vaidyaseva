@@ -1,7 +1,6 @@
 package com.mrknti.vaidyaseva.ui.home
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -160,10 +159,6 @@ fun HomeAppBar(modifier: Modifier, onHamburgerClick: () -> Unit) {
                 horizontalArrangement = Arrangement.Center,
                 modifier = modifier.offset((-16).dp)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.logo_24),
-                    contentDescription = null
-                )
                 Text(
                     text = stringResource(R.string.app_name),
                     modifier = Modifier.padding(start = 8.dp),
@@ -263,9 +258,7 @@ fun HomeBottomTabs(navController: NavHostController) {
                         })
                     },
                     bottomBar = {
-                        BottomAppBar(
-//                            containerColor = MaterialTheme.colorScheme.primary
-                        ) {
+                        BottomAppBar {
                             homeNavItems.forEach {
                                 val selected = pagerState.currentPage == it.position
                                 NavigationBarItem(

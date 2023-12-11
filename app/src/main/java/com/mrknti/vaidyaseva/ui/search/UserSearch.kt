@@ -1,6 +1,5 @@
 package com.mrknti.vaidyaseva.ui.search
 
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,28 +23,31 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.mrknti.vaidyaseva.R
 import com.mrknti.vaidyaseva.data.UserRole
 import com.mrknti.vaidyaseva.data.user.User
+import com.mrknti.vaidyaseva.ui.onboarding.ImageGallery
 import com.mrknti.vaidyaseva.util.DateFormat
 import com.mrknti.vaidyaseva.util.formatDate
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.util.Date
 
 @Composable
-fun UserSearch(onUploadClick: (String) -> Unit, onSearchDone: (User) -> Unit) {
+fun UserSearch(
+    onUploadClick: (String) -> Unit,
+    onSearchDone: (User) -> Unit,
+    navigateToFullScreenImage: (String) -> Unit
+) {
     val viewModel: UserSearchViewModel = viewModel()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle(initialValue = "")
     val viewState by viewModel.state.collectAsStateWithLifecycle()
@@ -78,15 +79,17 @@ fun UserSearch(onUploadClick: (String) -> Unit, onSearchDone: (User) -> Unit) {
                     user = viewState.selectedUser!!,
                     buildingName = viewState.selectedUserInfo?.buildingName,
                     roomName = viewState.selectedUserInfo?.roomName,
-                    passportUrl = viewState.passportUrl,
-                    passportUri = viewState.passportUri,
+                    passportData = viewState.passportData,
                     passportExpiry = viewState.passportExpiry,
-                    visaUrl = viewState.visaUrl,
-                    visaUri = viewState.visaUri,
+                    visaData = viewState.visaData,
                     visaExpiry = viewState.visaExpiry,
                     token = viewModel.authToken,
                     onUploadClick = {
                         onUploadClick(viewModel.selectedUserJson)
+                    },
+                    onImageClick = {
+                        val url = URLEncoder.encode(it as String, StandardCharsets.UTF_8.toString())
+                        navigateToFullScreenImage(url)
                     }
                 )
             }
@@ -170,33 +173,15 @@ fun SelectedUserDetails(
     user: User,
     buildingName: String?,
     roomName: String?,
-    passportUrl: String?,
-    passportUri: Uri?,
+    passportData: List<Any>,
     passportExpiry: Date?,
-    visaUrl: String?,
-    visaUri: Uri?,
+    visaData: List<Any>,
     visaExpiry: Date?,
     token: String,
-    onUploadClick: () -> Unit
+    onUploadClick: () -> Unit,
+    onImageClick: (Any) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val passportImageModel by remember(passportUri, passportUrl) { derivedStateOf {
-        if (passportUrl != null) {
-            ImageRequest.Builder(context)
-                .data(passportUrl)
-                .addHeader("token", token)
-                .build()
-        } else passportUri
-    } }
-    val visaImageModel by remember(visaUri, visaUrl) { derivedStateOf {
-        if (visaUrl != null) {
-            ImageRequest.Builder(context)
-                .data(visaUrl)
-                .addHeader("token", token)
-                .build()
-        } else visaUri
-    } }
 
     Column(modifier = modifier.padding(top = 8.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)) {
         Text(text = user.displayName, style = MaterialTheme.typography.titleSmall)
@@ -227,7 +212,7 @@ fun SelectedUserDetails(
         }
         AnimatedVisibility(visible = expanded) {
             Column(modifier = Modifier.padding(start = 10.dp, end = 10.dp)) {
-                if (passportImageModel != null) {
+                if (passportData.isNotEmpty()) {
                     Row {
                         Text(text = "Passport", style = MaterialTheme.typography.bodyMedium)
                         Spacer(modifier = Modifier.weight(1f))
@@ -239,21 +224,20 @@ fun SelectedUserDetails(
                         }
                     }
                     Spacer(modifier = Modifier.size(8.dp))
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(passportUrl)
-                            .addHeader("token", token)
-                            .build(),
-                        contentDescription = "Documents",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 200.dp)
+                    ImageGallery(
+                        imageData = passportData,
+                        token = token,
+                        showClose = false,
+                        onImageClick = {
+                            val data = passportData[it]
+                            onImageClick(data)
+                        }
                     )
                 }
                 Spacer(modifier = Modifier.size(16.dp))
-                if (visaImageModel != null) {
+                if (visaData.isNotEmpty()) {
                     Row {
-                        Text(text = "Passport", style = MaterialTheme.typography.bodyMedium)
+                        Text(text = "Visa", style = MaterialTheme.typography.bodyMedium)
                         Spacer(modifier = Modifier.weight(1f))
                         if (visaExpiry != null) {
                             Text(
@@ -263,17 +247,17 @@ fun SelectedUserDetails(
                         }
                     }
                     Spacer(modifier = Modifier.size(8.dp))
-                    AsyncImage(model = ImageRequest.Builder(LocalContext.current)
-                        .data(visaUrl)
-                        .addHeader("token", token)
-                        .build(),
-                        contentDescription = "Documents",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 200.dp)
+                    ImageGallery(
+                        imageData = visaData,
+                        token = token,
+                        showClose = false,
+                        onImageClick = {
+                            val data = visaData[it]
+                            onImageClick(data)
+                        }
                     )
                 }
-                val hasDocs = passportImageModel != null && visaImageModel != null
+                val hasDocs = passportData.isNotEmpty() && visaData.isNotEmpty()
                 val docText = if (hasDocs) "Edit Documents" else "Upload Documents"
                 TextButton(
                     onClick = onUploadClick,

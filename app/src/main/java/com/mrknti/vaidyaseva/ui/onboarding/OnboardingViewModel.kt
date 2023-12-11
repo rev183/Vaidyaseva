@@ -52,6 +52,18 @@ class OnboardingViewModel : ViewModel() {
         _state.value = _state.value.copy(password = value)
     }
 
+    fun setConfirmPassword(value: String) {
+        _state.value = _state.value.copy(confirmPassword = value)
+    }
+
+    fun setEmail(value: String) {
+        _state.value = _state.value.copy(email = value)
+    }
+
+    fun setPhoneNum(value: String) {
+        _state.value = _state.value.copy(phoneNum = value)
+    }
+
     fun setFirstName(value: String) {
         _state.value = _state.value.copy(firstName = value)
     }
@@ -68,8 +80,11 @@ class OnboardingViewModel : ViewModel() {
 data class OnboardingUIState(
     var username: String = "",
     var password: String = "",
+    var confirmPassword: String = "",
     var firstName: String = "",
     var lastName: String = "",
+    var phoneNum: String = "",
+    var email: String = "",
     var role: UserRole = UserRole.CLIENT,
     val isLoading: Boolean = false,
     val error: String = "",

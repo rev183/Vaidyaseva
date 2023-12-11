@@ -24,7 +24,7 @@ class BuildingRepositoryImpl(private val apiService: ApiService) : BuildingRepos
         convertToISO8601(checkOut)
     )
 
-    override suspend fun checkOutOccupancy(occupancyId: Int): Flow<Unit> =
+    override suspend fun checkOutOccupancy(occupancyId: Int): Flow<RoomOccupancy> =
         apiService.checkOutOccupancy(occupancyId)
 
 }

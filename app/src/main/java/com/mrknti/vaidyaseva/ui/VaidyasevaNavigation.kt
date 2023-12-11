@@ -24,7 +24,6 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object HomeTabs : Screen("home_tabs")
     data object Services : Screen("services")
-    data object Inbox : Screen("inbox")
     data object Login : Screen("login")
     data object BookServices : Screen("book_services")
     data object ChatDetail : Screen("chat_detail")
@@ -33,6 +32,7 @@ sealed class Screen(val route: String) {
     data object DocUpload : Screen("doc_upload")
     data object UserSearch : Screen("user_search")
     data object BuildingDetail : Screen("building_detail")
+    data object FullScreenImage : Screen("full_image")
 }
 
 object NavGraph {
@@ -49,6 +49,7 @@ object NavArgKeys {
     const val SERVICE_DATA = "service_data"
     const val USER_DATA = "user_data"
     const val BUILDING_ID = "building_id"
+    const val IMAGE_URL = "image_url"
 }
 
 @Composable
@@ -126,9 +127,14 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
                 }
             )
         ) {
-            DocumentUpload {
-                navController.popBackStack(Screen.HomeTabs.route, false)
-            }
+            DocumentUpload(
+                onFinishClick = {
+                    navController.popBackStack(Screen.HomeTabs.route, false)
+                },
+                navigateToFullScreenImage = {
+                    navController.navigate("${Screen.FullScreenImage.route}/$it")
+                }
+            )
         }
         composable(
             route = "${Screen.UserSearch.route}/{${NavArgKeys.SEARCH_TYPE}}}",
@@ -148,6 +154,9 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
                         it
                     )
                     navController.popBackStack()
+                },
+                navigateToFullScreenImage = {
+                    navController.navigate("${Screen.FullScreenImage.route}/$it")
                 }
             )
         }
@@ -159,7 +168,21 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
                 }
             )
         ) {
-            BuildingDetail()
+            BuildingDetail {
+                navController.navigate("${Screen.FullScreenImage.route}/$it")
+            }
+        }
+
+        composable(
+            route = "${Screen.FullScreenImage.route}/{${NavArgKeys.IMAGE_URL}}",
+            arguments = listOf(
+                navArgument(NavArgKeys.IMAGE_URL) {
+                    type = NavType.StringType
+                }
+            )
+        ) {
+            val url = it.arguments?.getString(NavArgKeys.IMAGE_URL) ?: ""
+            FullScreenImage(url)
         }
     }
 }

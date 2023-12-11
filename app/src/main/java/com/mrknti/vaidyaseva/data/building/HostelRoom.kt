@@ -27,3 +27,13 @@ data class RoomOccupancy(
     val checkInTime: Date?,
     val checkoutTime: Date?
 )
+
+data class OccupancyPayload(
+    val id: Int,
+    val roomId: Int,
+    val buildingId: Int,
+    val occupancyStatus: Int,
+    val checkInTime: Date,
+    val checkoutTime: Date,
+    val userDto: User
+)

@@ -4,24 +4,24 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mrknti.vaidyaseva.Graph
+import com.mrknti.vaidyaseva.data.OccupancyStatus
 import com.mrknti.vaidyaseva.data.UserRole
 import com.mrknti.vaidyaseva.data.building.BuildingData
 import com.mrknti.vaidyaseva.data.building.HostelRoom
 import com.mrknti.vaidyaseva.data.eventBus.EventBus
 import com.mrknti.vaidyaseva.data.eventBus.RoomBookedEvent
 import com.mrknti.vaidyaseva.data.eventBus.RoomCheckedOutEvent
+import com.mrknti.vaidyaseva.data.eventBus.RoomOccupancyChangedEvent
 import com.mrknti.vaidyaseva.data.network.handleError
 import com.mrknti.vaidyaseva.data.user.User
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class BuildingDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
-    private val buildingId = saveState.get<Int>("building_id")!!
+    val buildingId = saveState.get<Int>("building_id")!!
     private val _state = MutableStateFlow(BuildingDetailViewState())
     val state = _state.asStateFlow()
     private val buildingRepository = Graph.buildingRepository
@@ -35,15 +35,37 @@ class BuildingDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
                 getBuildingData()
             }
         }
+
         viewModelScope.launch {
             EventBus.subscribe<RoomCheckedOutEvent> {
-                handleCheckout(it.occupancyId, it.roomId)
+                if (it.buildingId == buildingId) {
+                    handleCheckout(it.occupancyId, it.roomId)
+                }
             }
         }
 
         viewModelScope.launch {
             Graph.dataStoreManager.getUser().collect {
                 _state.value = _state.value.copy(selfUser = it)
+            }
+        }
+
+        viewModelScope.launch {
+            EventBus.subscribe<RoomOccupancyChangedEvent> {
+                val occupancy = it.occupancy
+                if (occupancy.buildingId == buildingId) {
+                    when (occupancy.occupancyStatus) {
+                        OccupancyStatus.CHECK_OUT.value -> {
+                            handleCheckout(occupancy.id, occupancy.roomId)
+                        }
+                        OccupancyStatus.CANCELLED.value -> {
+                            handleCheckout(occupancy.id, occupancy.roomId)
+                        }
+                        else -> {
+                            getBuildingData()
+                        }
+                    }
+                }
             }
         }
     }
@@ -76,6 +98,13 @@ class BuildingDetailViewModel(saveState: SavedStateHandle) : ViewModel() {
                 occupancies.removeAt(occupancyIndex)
                 rooms[roomIndex] = room.copy(occupancies = occupancies, isOccupied = false)
                 _state.value = _state.value.copy(rooms = rooms)
+                val buildingData = state.value.buildingData!!
+                _state.value = _state.value.copy(
+                    buildingData = buildingData.copy(
+                        numOccupiedRooms = (buildingData.numOccupiedRooms ?: 0) - 1,
+                        freeRooms = (buildingData.freeRooms ?: 0) + 1
+                    ),
+                )
             }
         }
     }

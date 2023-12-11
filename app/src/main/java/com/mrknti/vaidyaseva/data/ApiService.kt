@@ -17,6 +17,7 @@ import okhttp3.RequestBody
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
@@ -99,7 +100,7 @@ interface ApiService {
         @Part("userId") clientId: Int,
         @Part("documentType") documentType: Int,
         @Part("expiryTime") expiryTime: RequestBody,
-        @Part data: MultipartBody.Part
+        @Part data: List<MultipartBody.Part>
     ): Flow<Unit>
 
     @GET("search/user")
@@ -128,7 +129,7 @@ interface ApiService {
     @FormUrlEncoded
     fun checkOutOccupancy(
         @Field("occupancyId") occupancyId: Int
-    ): Flow<Unit>
+    ): Flow<RoomOccupancy>
 
     @GET("get-all")
     fun getAllDocuments(
@@ -144,5 +145,8 @@ interface ApiService {
     @POST("/logout")
     @FormUrlEncoded
     fun logout(@Field("deviceId") deviceId: Int?): Flow<Unit>
+
+    @HTTP(method = "DELETE", path = "/delete-document", hasBody = false)
+    fun deleteDocument(@Query("documentId") id: Int): Flow<Unit>
 
 }

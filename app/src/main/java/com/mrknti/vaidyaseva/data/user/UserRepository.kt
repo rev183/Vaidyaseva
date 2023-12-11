@@ -11,9 +11,11 @@ interface UserRepository {
         clientId: Int,
         documentType: Int,
         expiryTime: Date,
-        document: MediaData,
+        documents: List<MediaData>,
     ): Flow<Unit>
     suspend fun getInbox(): Flow<List<InboxItem>>
 
     suspend fun getUserInfo(userId: Int?): Flow<UserInfo>
+
+    suspend fun deleteDocument(documentId: Int): Flow<Unit>
 }

@@ -17,9 +17,11 @@ import androidx.core.app.NotificationManagerCompat
 import com.mrknti.vaidyaseva.BuildConfig
 import com.mrknti.vaidyaseva.Graph
 import com.mrknti.vaidyaseva.R
+import com.mrknti.vaidyaseva.data.building.OccupancyPayload
 import com.mrknti.vaidyaseva.data.chat.ChatMessage
 import com.mrknti.vaidyaseva.data.eventBus.EventBus
 import com.mrknti.vaidyaseva.data.eventBus.NewChatEvent
+import com.mrknti.vaidyaseva.data.eventBus.RoomOccupancyChangedEvent
 import com.mrknti.vaidyaseva.data.eventBus.ServiceAcknowledgeEvent
 import com.mrknti.vaidyaseva.data.eventBus.ServiceCompletedEvent
 import com.mrknti.vaidyaseva.data.eventBus.ServiceRaisedEvent
@@ -34,6 +36,7 @@ object NotificationType {
     const val REQUEST_ACKNOWLEDGED = "REQUEST_ACK"
     const val REQUEST_COMPLETE = "REQUEST_COMPLETE"
     const val CHAT_ADDED = "CHAT_ADDED"
+    const val OCCUPANCY_CHANGED = "OCCUPANCY_CHANGED"
 }
 
 class NotificationsManager(private val context: Context) {
@@ -67,6 +70,13 @@ class NotificationsManager(private val context: Context) {
                 val service = moshi.adapter(Service::class.java).fromJson(notificationData.payload)!!
                 CoroutineScope(Dispatchers.IO).launch {
                     EventBus.publish(ServiceCompletedEvent(service))
+                }
+            }
+            NotificationType.OCCUPANCY_CHANGED -> {
+                val occupancyPayload =
+                    moshi.adapter(OccupancyPayload::class.java).fromJson(notificationData.payload)!!
+                CoroutineScope(Dispatchers.IO).launch {
+                    EventBus.publish(RoomOccupancyChangedEvent(occupancyPayload))
                 }
             }
         }
