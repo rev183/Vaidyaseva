@@ -1,5 +1,6 @@
 package com.mrknti.vaidyaseva.ui.services
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,10 +10,16 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -26,13 +33,15 @@ import com.mrknti.vaidyaseva.util.DateFormat
 import com.mrknti.vaidyaseva.util.formatDate
 
 @Composable
-fun ServiceDetail() {
+fun ServiceDetail(onBackPressed: () -> Unit) {
     val viewModel: ServiceDetailViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val service = viewState.service
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        VsTopAppBar(title = "Service Detail", onBackPressed = onBackPressed)
+
+        Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp, top = 16.dp)) {
             Text(
                 text = "${ServiceType.getByValue(service.type).uiString} service requested by ${service.requester.displayName}",
                 style = MaterialTheme.typography.titleSmall
@@ -81,16 +90,43 @@ fun ServiceDetail() {
                     style = MaterialTheme.typography.bodySmall
                 )
             }
+
+            Spacer(modifier = Modifier.size(16.dp))
+            Text(
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                text = "Service Chat",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            HorizontalDivider(thickness = 2.dp)
+            ChatDetail(threadId = viewState.service.threadId)
+            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.ime))
         }
-        Spacer(modifier = Modifier.size(16.dp))
-        Text(
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-            text = "Service Chat",
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.size(8.dp))
-        Divider(thickness = 2.dp)
-        ChatDetail(threadId = viewState.service.threadId)
-        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.ime))
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VsTopAppBar(title: String, onBackPressed: () -> Unit) {
+    TopAppBar(
+        title = {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = title,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        },
+        navigationIcon = {
+            IconButton(onClick = onBackPressed) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = "Toggle Drawer",
+                )
+            }
+        }
+    )
+    HorizontalDivider(thickness = 1.dp)
 }

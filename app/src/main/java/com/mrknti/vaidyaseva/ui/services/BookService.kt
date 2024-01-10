@@ -26,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SelectableDates
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -71,7 +70,8 @@ fun BookService(
     modifier: Modifier = Modifier,
     onFinishClick: () -> Unit,
     onGotoSearch: () -> Unit,
-    requesterFlow: StateFlow<User?>?
+    requesterFlow: StateFlow<User?>?,
+    onBackPressed: () -> Unit
 ) {
     val viewModel: BookServiceViewModel = viewModel()
     val viewState by viewModel.state.collectAsStateWithLifecycle()
@@ -108,13 +108,16 @@ fun BookService(
         }
     }
 
-    Surface(modifier = modifier
-        .fillMaxSize()
-        .padding(top = 16.dp, bottom = 0.dp, start = 20.dp, end = 20.dp) ) {
-        Column(modifier = modifier.fillMaxSize()) {
+    Column() {
+        VsTopAppBar(title = "Book service", onBackPressed = onBackPressed)
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(top = 16.dp, bottom = 0.dp, start = 20.dp, end = 20.dp)
+        ) {
             Text(
                 text = viewState.serviceType.getBookingTitle(),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
             )
             Spacer(modifier = Modifier.size(8.dp))

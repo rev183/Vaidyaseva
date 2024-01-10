@@ -95,7 +95,7 @@ class NotificationsManager(private val context: Context) {
 
         val builder = NotificationCompat.Builder(context, defaultChannel)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setColor(context.getColor(R.color.teal_700))
+            .setColor(context.getColor(R.color.primary))
             .setContentTitle(notification.title)
             .setContentText(notification.body)
             .setShowWhen(true)
@@ -126,19 +126,5 @@ class NotificationsManager(private val context: Context) {
             manager.createNotificationChannel(channel)
         }
     }
-
-//    private fun getNotificationChannels(): List<NotificationChannel> {
-//        var existingChannels = mutableListOf<NotificationChannel>()
-//        NotificationManagerCompat.from(context.applicationContext).run {
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                try {
-//                    existingChannels = notificationChannels
-//                } catch (_ : Exception) {
-//
-//                }
-//            }
-//        }
-//        return existingChannels
-//    }
 
 }

@@ -94,7 +94,8 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
             BookService(
                 onFinishClick = { navController.popBackStack(Screen.HomeTabs.route, false) },
                 onGotoSearch = { navController.navigate(searchRoute(SearchType.GET_USER)) },
-                requesterFlow = requesterFlow
+                requesterFlow = requesterFlow,
+                onBackPressed = { navController.navigateUp() }
             )
         }
         composable(
@@ -113,7 +114,9 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
                 }
             )
         ) {
-            ServiceDetail()
+            ServiceDetail {
+                navController.navigateUp()
+            }
         }
         composable(route = Screen.OnboardUser.route) {
             OnboardClient { userJson ->
@@ -168,9 +171,14 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController) {
                 }
             )
         ) {
-            BuildingDetail {
-                navController.navigate("${Screen.FullScreenImage.route}/$it")
-            }
+            BuildingDetail(
+                navigateToFullScreenImage = {
+                    navController.navigate("${Screen.FullScreenImage.route}/$it")
+                },
+                onBackPressed = {
+                    navController.navigateUp()
+                }
+            )
         }
 
         composable(
